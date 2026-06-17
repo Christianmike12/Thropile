@@ -8,14 +8,29 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != "Guru") {
     exit();
 }
 
+// ================= LOGIKA PENGATURAN AKUN GURU (DIRI SENDIRI) =================
+if (isset($_POST['edit_profil_guru'])) {
+    $nip_guru  = $_POST['nip_guru'];
+    $nama_guru = $_POST['nama_guru'];
+    $pass_guru = $_POST['pass_guru'];
+
+    mysqli_query($conn, "UPDATE guru SET nama_guru='$nama_guru', PASSWORD='$pass_guru' WHERE nip='$nip_guru'");
+
+    // Update session nama
+    $_SESSION['nama'] = $nama_guru;
+
+    echo "<script>alert('Profil Guru berhasil diperbarui!'); window.location='input_prestasi.php';</script>";
+    exit();
+}
+
 $pesan = "";
 
-// PROSES DIPERKUAT: Cek murni berdasarkan Request Method POST (Biar tombol apapun kedeteksi)
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
+// ================= LOGIKA INPUT PRESTASI =================
+if ($_SERVER["REQUEST_METHOD"] == "POST" && !isset($_POST['edit_profil_guru'])) {
 
-    // DETEKSI XAMPP DROP LIMIT: Kalau $_POST tiba-tiba kosong karena file terlalu besar
+    // DETEKSI XAMPP DROP LIMIT
     if (empty($_POST) && isset($_SERVER['CONTENT_LENGTH']) && $_SERVER['CONTENT_LENGTH'] > 0) {
-        $pesan = "<div class='alert alert-danger'><b>Gagal!</b> Ukuran file terlalu besar sampai ditolak oleh XAMPP. Coba pakai file PDF/Foto di bawah 2MB.</div>";
+        $pesan = "<div class='alert alert-danger fw-medium'><b>Gagal!</b> Ukuran file terlalu besar. Coba pakai file PDF/Foto di bawah 5MB.</div>";
     } else {
         $nisn                = mysqli_real_escape_string($conn, $_POST['nisn']);
         $nama_lomba          = mysqli_real_escape_string($conn, $_POST['nama_lomba']);
@@ -41,14 +56,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $error_file  = $_FILES['sertifikat']['error'];
 
         if ($error_file == 4) {
-            $pesan = "<div class='alert alert-danger'>Pilih file sertifikat/piagam terlebih dahulu!</div>";
+            $pesan = "<div class='alert alert-danger fw-medium'>Pilih file sertifikat/piagam terlebih dahulu!</div>";
         } else {
             $ext = strtolower(pathinfo($nama_asli, PATHINFO_EXTENSION));
 
             if (!in_array($ext, $allowed_ext)) {
-                $pesan = "<div class='alert alert-danger'>Format file tidak valid! Gunakan PDF, JPG, atau PNG.</div>";
+                $pesan = "<div class='alert alert-danger fw-medium'>Format file tidak valid! Gunakan PDF, JPG, atau PNG.</div>";
             } elseif ($ukuran > 5 * 1024 * 1024) {
-                $pesan = "<div class='alert alert-danger'>Ukuran file maksimal adalah 5MB!</div>";
+                $pesan = "<div class='alert alert-danger fw-medium'>Ukuran file maksimal adalah 5MB!</div>";
             } else {
                 $nama_file = time() . '_' . preg_replace("/[^a-zA-Z0-9]/", "", $nisn) . '_' . preg_replace("/[^a-zA-Z0-9]/", "", $nama_lomba) . '.' . $ext;
                 $folder_tujuan = "../../assets/uploads/" . $nama_file;
@@ -63,84 +78,129 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                               )";
 
                     if (mysqli_query($conn, $query)) {
-                        echo "<script>alert('Data prestasi berhasil diajukan dan masuk ke database!'); window.location='dashboard.php';</script>";
+                        echo "<script>alert('Data prestasi berhasil diajukan dan masuk antrean verifikasi!'); window.location='dashboard.php';</script>";
                         exit();
                     } else {
-                        $pesan = "<div class='alert alert-danger'>Gagal database: " . mysqli_error($conn) . "</div>";
+                        $pesan = "<div class='alert alert-danger fw-medium'>Gagal database: " . mysqli_error($conn) . "</div>";
                     }
                 } else {
-                    $pesan = "<div class='alert alert-danger'>Gagal memindahkan file! Pastikan folder <b>assets/uploads</b> beneran ada!</div>";
+                    $pesan = "<div class='alert alert-danger fw-medium'>Gagal memindahkan file! Pastikan folder <b>assets/uploads</b> beneran ada!</div>";
                 }
             }
         }
     }
 }
+
+// Ambil data profil terbaru untuk modal
+$nip_aktif = $_SESSION['nip'];
+$q_profil = mysqli_query($conn, "SELECT * FROM guru WHERE nip='$nip_aktif'");
+$dt_profil = mysqli_fetch_assoc($q_profil);
+
+// DATA SISWA UNTUK DROPDOWN BERTINGKAT (Ubah jadi format JSON)
+$q_all_siswa = mysqli_query($conn, "SELECT nisn, nama_siswa, kelas FROM siswa ORDER BY nama_siswa ASC");
+$data_all_siswa = [];
+while ($row = mysqli_fetch_assoc($q_all_siswa)) {
+    // Kelompokkan siswa berdasarkan kelas
+    $data_all_siswa[$row['kelas']][] = [
+        'nisn' => $row['nisn'],
+        'nama' => $row['nama_siswa']
+    ];
+}
+$json_siswa = json_encode($data_all_siswa);
 ?>
 <!DOCTYPE html>
 <html lang="id">
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Input Prestasi - Trophile</title>
-    <link rel="stylesheet" href="../../assets/css/guru_dashboard.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../assets/css/guru_dashboard.css?v=<?php echo time(); ?>">
 </head>
 
 <body>
     <nav class="navbar-custom">
         <div class="nav-container">
-            <a href="dashboard.php" style="font-size:22px;font-weight:bold;letter-spacing:2px;text-decoration:none;color:white;">TROPHILE</a>
-            <div>
-                <span class="me-3">Halo, <?php echo $_SESSION['nama']; ?></span>
-                <a href="../../logout.php" class="btn-logout">Keluar</a>
+            <div class="brand-wrapper">
+                <img src="../../assets/images/SMANSA.png" alt="Logo" width="35">
+                <a href="dashboard.php" class="brand-logo">TROPHILE SMANSA</a>
+            </div>
+
+            <div class="dropdown">
+                <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" style="border: 1px solid rgba(255,255,255,0.3); padding: 6px 15px; border-radius: 8px;">
+                    <span class="me-2 fw-medium d-none d-md-block">Halo, <?php echo $_SESSION['nama']; ?></span>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="border-radius: 12px; border:none; margin-top:10px;">
+                    <li>
+                        <h6 class="dropdown-header text-muted">Akses Guru Pembina</h6>
+                    </li>
+                    <li><a class="dropdown-item fw-medium" href="#" data-bs-toggle="modal" data-bs-target="#editProfilGuru">⚙️ Pengaturan Akun</a></li>
+                    <li>
+                        <hr class="dropdown-divider">
+                    </li>
+                    <li><a class="dropdown-item text-danger fw-bold" href="../../logout.php">🚪 Keluar</a></li>
+                </ul>
             </div>
         </div>
     </nav>
 
     <div class="main-wrapper">
-        <div class="floating-card" style="max-width: 800px; margin: auto;">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h4 class="fw-bold m-0">Form Input Prestasi Siswa</h4>
-                <a href="dashboard.php" class="btn btn-outline-dark btn-sm">&larr; Kembali</a>
+        <div class="floating-card" style="max-width: 850px; margin: auto;">
+            <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+                <h4 class="fw-bold m-0 text-navy">Form Input Prestasi Siswa</h4>
+                <a href="dashboard.php" class="btn btn-outline-dark btn-sm rounded-pill px-3 fw-medium">&larr; Batal & Kembali</a>
             </div>
 
             <?php echo $pesan; ?>
 
             <form action="" method="POST" enctype="multipart/form-data">
-                <div class="mb-3">
-                    <label class="form-label">Siswa (NISN)</label>
-                    <select name="nisn" class="form-select" required>
-                        <option value="">-- Pilih Siswa --</option>
-                        <?php
-                        $q_siswa = mysqli_query($conn, "SELECT nisn, nama_siswa, kelas FROM siswa ORDER BY kelas ASC, nama_siswa ASC");
-                        while ($s = mysqli_fetch_assoc($q_siswa)) {
-                            echo "<option value='{$s['nisn']}'>{$s['kelas']} - {$s['nama_siswa']} ({$s['nisn']})</option>";
-                        }
-                        ?>
-                    </select>
+
+                <!-- ROW DROPDOWN BERTINGKAT (KELAS -> SISWA) -->
+                <div class="row">
+                    <div class="col-md-5 mb-4">
+                        <label class="form-label">Pilih Kelas</label>
+                        <select id="pilihKelas" class="form-select bg-light" required>
+                            <option value="">-- Pilih Kelas --</option>
+                            <?php
+                            $q_kelas = mysqli_query($conn, "SELECT DISTINCT kelas FROM siswa ORDER BY kelas ASC");
+                            while ($k = mysqli_fetch_assoc($q_kelas)) {
+                                $kelas_val = htmlspecialchars($k['kelas']);
+                                echo "<option value='$kelas_val'>Kelas $kelas_val</option>";
+                            }
+                            ?>
+                        </select>
+                    </div>
+                    <div class="col-md-7 mb-4">
+                        <label class="form-label">Nama Siswa Binaan</label>
+                        <select name="nisn" id="pilihSiswa" class="form-select bg-light" required disabled>
+                            <option value="">-- Silakan Pilih Kelas Dulu --</option>
+                        </select>
+                    </div>
                 </div>
 
-                <div class="mb-3">
+                <div class="mb-4">
                     <label class="form-label">Nama Kompetisi / Kejuaraan</label>
                     <input type="text" name="nama_lomba" class="form-control" required placeholder="Contoh: Olimpiade Sains Nasional Matematika">
                 </div>
 
                 <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Kategori</label>
+                    <div class="col-md-6 mb-4">
+                        <label class="form-label">Kategori Lomba</label>
                         <select name="kategori" id="kategoriSelect" class="form-select" onchange="checkKategori(this.value)" required>
                             <option value="">-- Pilih Kategori --</option>
                             <option value="Akademik">Akademik</option>
                             <option value="Non-Akademik">Non-Akademik</option>
                             <option value="Lainnya">Lainnya (Ketik Manual)</option>
                         </select>
-                        <input type="text" name="kategori_lainnya" id="kategoriLainnyaInput" class="form-control mt-2" placeholder="Masukkan Kategori Custom" style="display:none;">
+                        <input type="text" name="kategori_lainnya" id="kategoriLainnyaInput" class="form-control mt-2 border-warning" placeholder="Ketik kategori..." style="display:none;">
                     </div>
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Tingkat</label>
+                    <div class="col-md-6 mb-4">
+                        <label class="form-label">Tingkat Penyelenggaraan</label>
                         <select name="tingkat" class="form-select" required>
                             <option value="">-- Pilih Tingkat --</option>
-                            <option value="Kota/Kabupaten">Kota/Kabupaten</option>
+                            <option value="Kota/Kabupaten">Kota / Kabupaten</option>
                             <option value="Provinsi">Provinsi</option>
                             <option value="Nasional">Nasional</option>
                             <option value="Internasional">Internasional</option>
@@ -149,8 +209,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 </div>
 
                 <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Hasil / Peringkat</label>
+                    <div class="col-md-6 mb-4">
+                        <label class="form-label">Hasil / Peringkat Juara</label>
                         <select name="peringkat" id="peringkatSelect" class="form-select" onchange="checkPeringkat(this.value)" required>
                             <option value="">-- Pilih Hasil --</option>
                             <option value="Juara 1">Juara 1</option>
@@ -159,26 +219,90 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             <option value="Harapan 1">Harapan 1</option>
                             <option value="Lainnya">Lainnya (Ketik Manual)</option>
                         </select>
-                        <input type="text" name="peringkat_lainnya" id="peringkatLainnyaInput" class="form-control mt-2" placeholder="Contoh: Medali Emas / Harapan 3" style="display:none;">
+                        <input type="text" name="peringkat_lainnya" id="peringkatLainnyaInput" class="form-control mt-2 border-warning" placeholder="Contoh: Medali Emas / Harapan 3" style="display:none;">
                     </div>
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-6 mb-4">
                         <label class="form-label">Tanggal Pelaksanaan</label>
                         <input type="date" name="tgl_lomba" class="form-control" required>
                     </div>
                 </div>
 
-                <div class="mb-4">
-                    <label class="form-label">Bukti Fisik (Sertifikat/Piagam)</label>
-                    <input type="file" name="sertifikat" class="form-control" accept=".pdf,.jpg,.jpeg,.png" required>
-                    <small class="text-muted">Maksimal file 5MB. Format yang didukung: PDF, JPG, PNG.</small>
+                <div class="mb-5 p-4 bg-light rounded border border-secondary border-opacity-25">
+                    <label class="form-label text-dark">Upload Bukti Fisik (Sertifikat/Piagam)</label>
+                    <input type="file" name="sertifikat" class="form-control bg-white" accept=".pdf,.jpg,.jpeg,.png" required>
+                    <div class="form-text mt-2"><span class="text-danger fw-medium">*Wajib.</span> Maksimal ukuran file 5MB. Format yang didukung: PDF, JPG, JPEG, PNG.</div>
                 </div>
 
-                <button type="submit" class="btn btn-dark w-100 py-2 fw-bold">Simpan & Ajukan Verifikasi</button>
+                <button type="submit" name="submit_prestasi" class="btn btn-action w-100 py-3 fw-bold" style="font-size: 1.1rem;">Kirim & Ajukan Verifikasi Data</button>
             </form>
         </div>
     </div>
 
+    <!-- MODAL PENGATURAN AKUN GURU -->
+    <div class="modal fade text-start" id="editProfilGuru" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <form method="POST" class="modal-content custom-modal shadow">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Pengaturan Akun Guru</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="nip_guru" value="<?php echo $dt_profil['nip'] ?? ''; ?>">
+
+                    <div class="mb-3">
+                        <label class="form-label small">NIP (Nomor Induk Pegawai)</label>
+                        <input type="text" class="form-control bg-light" value="<?php echo $dt_profil['nip'] ?? ''; ?>" readonly>
+                        <div class="form-text small">*NIP digunakan sebagai Username Login dan tidak bisa diubah.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small">Nama Lengkap & Gelar</label>
+                        <input type="text" name="nama_guru" class="form-control" value="<?php echo $dt_profil['nama_guru'] ?? ''; ?>" required>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small">Password Akun</label>
+                        <input type="text" name="pass_guru" class="form-control" value="<?php echo $dt_profil['PASSWORD'] ?? ''; ?>" required>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="submit" name="edit_profil_guru" class="btn btn-action w-100">Simpan Pengaturan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
     <script>
+        // LOGIKA DROPDOWN BERTINGKAT (CASCADING DROPDOWN)
+        // Data siswa dikirim dari PHP ke JavaScript dalam bentuk JSON
+        const dataSiswa = <?php echo $json_siswa; ?>;
+        const selectKelas = document.getElementById('pilihKelas');
+        const selectSiswa = document.getElementById('pilihSiswa');
+
+        selectKelas.addEventListener('change', function() {
+            const kelasTerpilih = this.value;
+
+            // Bersihkan dropdown siswa
+            selectSiswa.innerHTML = '<option value="">-- Silakan Pilih Siswa --</option>';
+
+            if (kelasTerpilih && dataSiswa[kelasTerpilih]) {
+                selectSiswa.disabled = false; // Buka kunci dropdown siswa
+
+                // Looping data siswa berdasarkan kelas yang dipilih
+                dataSiswa[kelasTerpilih].forEach(function(siswa) {
+                    const option = document.createElement('option');
+                    option.value = siswa.nisn;
+                    option.textContent = siswa.nama + " (" + siswa.nisn + ")";
+                    selectSiswa.appendChild(option);
+                });
+            } else {
+                // Kalau kelas dikosongin, dropdown siswa dikunci lagi
+                selectSiswa.disabled = true;
+                selectSiswa.innerHTML = '<option value="">-- Silakan Pilih Kelas Dulu --</option>';
+            }
+        });
+
+        // LOGIKA KATEGORI & PERINGKAT LAINNYA
         function checkKategori(val) {
             const inputKategori = document.getElementById('kategoriLainnyaInput');
             if (val === 'Lainnya') {

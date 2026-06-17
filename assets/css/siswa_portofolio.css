@@ -32,6 +32,10 @@ body {
   font-style: normal !important;
   margin: 0;
 }
+.kop-surat a {
+  color: #000 !important;
+  text-decoration: none;
+}
 
 .judul-dokumen {
   text-align: center;
