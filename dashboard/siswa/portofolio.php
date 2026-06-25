@@ -27,16 +27,15 @@ $tanggal_cetak = date('d') . " " . $bulanIndo[date('n') - 1] . " " . date('Y');
 <head>
     <meta charset="UTF-8">
     <title>Portofolio - Trophile</title>
-    <link rel="stylesheet" href="../../assets/css/siswa_portofolio.css">
+    <link rel="stylesheet" href="../../assets/css/siswa_portofolio.css?v=<?php echo time(); ?>">
 </head>
 
 <body>
     <div class="kop-surat">
         <img src="../../assets/images/SMANSA.png" alt="Logo SMANSA" style="position:absolute;left:15px;top:0;width:120px;height:auto;">
-        <h2>PEMERINTAH PROVINSI JAWA TIMUR<br>DINAS PENDIDIKAN</h2>
-        <h1><b>SMA NEGERI 1 KESAMBEN</b></h1>
-        <p>Jalan Bromo Kesamben, Blitar 66191. Telepon (0342) 331397</p>
-        <p>Website: <a href="http://www.sman1kesamben.sch.id" target="_blank">www.sman1kesamben.sch.id.</a> Email: <a href="mailto:info@sman1kesamben.com">info@sman1kesamben.com</a></p>
+        <h2>Student Achievement Management System<br>PORTOFOLIO PRESTASI SISWA</h2>
+        <h1><b>TROPHILE</b></h1>
+        <p>Dokumen Rekam Jejak Prestasi yang Dihasilkan oleh Sistem</p>
     </div>
 
     <div class="judul-dokumen">Portofolio Rekam Jejak Prestasi Siswa</div>
@@ -45,22 +44,22 @@ $tanggal_cetak = date('d') . " " . $bulanIndo[date('n') - 1] . " " . date('Y');
         <tr>
             <td style="width:20%;">Nama Lengkap</td>
             <td style="width:3%;">:</td>
-            <td style="width:77%;font-weight:bold;"><?php echo $data_siswa['nama_siswa'] ?? '-'; ?></td>
+            <td style="width:77%;font-weight:bold;"><?php echo htmlspecialchars($data_siswa['nama_siswa'] ?? '-'); ?></td>
         </tr>
         <tr>
             <td>Nomor Induk (NISN)</td>
             <td>:</td>
-            <td><?php echo $data_siswa['nisn'] ?? '-'; ?></td>
+            <td><?php echo htmlspecialchars($data_siswa['nisn'] ?? '-'); ?></td>
         </tr>
         <tr>
             <td>Kelas</td>
             <td>:</td>
-            <td><?php echo $data_siswa['kelas'] ?? '-'; ?></td>
+            <td><?php echo htmlspecialchars($data_siswa['kelas'] ?? '-'); ?></td>
         </tr>
     </table>
 
     <div class="narasi">
-        Sistem Informasi Manajemen Prestasi Siswa (Trophile) menyatakan bahwa siswa yang bersangkutan di atas memiliki rekam jejak prestasi resmi akademik maupun non-akademik yang telah tervalidasi oleh pihak sekolah sebagai berikut:
+        Dokumen ini merupakan portofolio rekam jejak prestasi siswa yang tersimpan dalam Sistem Informasi Manajemen Prestasi Siswa (TROPHILE). Seluruh data prestasi yang ditampilkan telah melalui proses verifikasi berdasarkan dokumen pendukung yang tersedia pada sistem
     </div>
 
     <table class="tabel-prestasi">
@@ -82,11 +81,11 @@ $tanggal_cetak = date('d') . " " . $bulanIndo[date('n') - 1] . " " . date('Y');
                     $tahun_lomba = !empty($row['tahun']) ? $row['tahun'] : (!empty($row['tanggal_pelaksanaan']) ? date('Y', strtotime($row['tanggal_pelaksanaan'])) : '-');
                     echo "<tr>
                         <td class='text-center'>$no</td>
-                        <td><strong>{$row['nama_lomba']}</strong></td>
-                        <td class='text-center'>{$row['kategori']}</td>
-                        <td class='text-center'>{$row['tingkat']}</td>
+                        <td><strong>" . htmlspecialchars($row['nama_lomba']) . "</strong></td>
+                        <td class='text-center'>" . htmlspecialchars($row['kategori']) . "</td>
+                        <td class='text-center'>" . htmlspecialchars($row['tingkat']) . "</td>
                         <td class='text-center'>$tahun_lomba</td>
-                        <td class='text-center'>{$row['peringkat']}</td>
+                        <td class='text-center'>" . htmlspecialchars($row['peringkat']) . "</td>
                     </tr>";
                     $no++;
                 }
@@ -103,15 +102,16 @@ $tanggal_cetak = date('d') . " " . $bulanIndo[date('n') - 1] . " " . date('Y');
             <td>
                 <div class="ttd-box">
                     Kesamben, <?php echo $tanggal_cetak; ?><br>
-                    Kepala SMAN 1 Kesamben,
+                    Mengetahui,<br>
+                    Kepala SMAN 1 Kesamben,<br><br>
                     <div class="space-ttd">
                         <img src="../../assets/images/tandatangan.png" alt="Tanda Tangan Kepsek" class="ttd-image">
                         <img src="../../assets/images/stempel.PNG" alt="Stempel Resmi SMANSA" class="stempel-image">
                     </div>
                     <span style="text-decoration:underline;font-weight:bold;position:relative;z-index:3;">
-                        <?php echo $data_kepsek['nama_kepala_sekolah'] ?? ''; ?>
+                        <?php echo htmlspecialchars($data_kepsek['nama_kepala_sekolah'] ?? ''); ?>
                     </span><br>
-                    NIP. <?php echo $data_kepsek['nip'] ?? ''; ?>
+                    NIP. <?php echo htmlspecialchars($data_kepsek['nip'] ?? ''); ?>
                 </div>
             </td>
         </tr>

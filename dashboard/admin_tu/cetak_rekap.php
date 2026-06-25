@@ -3,7 +3,7 @@ session_start();
 require '../../koneksi.php';
 /** @var mysqli $conn */
 
-if (!isset($_SESSION['role']) || $_SESSION['role'] != "Kepala Sekolah") {
+if (!isset($_SESSION['role']) || $_SESSION['role'] != "Admin TU") {
     header("Location: ../../index.php");
     exit();
 }
