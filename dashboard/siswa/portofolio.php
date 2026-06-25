@@ -33,10 +33,9 @@ $tanggal_cetak = date('d') . " " . $bulanIndo[date('n') - 1] . " " . date('Y');
 <body>
     <div class="kop-surat">
         <img src="../../assets/images/SMANSA.png" alt="Logo SMANSA" style="position:absolute;left:15px;top:0;width:120px;height:auto;">
-        <h2>PEMERINTAH PROVINSI JAWA TIMUR<br>DINAS PENDIDIKAN</h2>
-        <h1><b>SMA NEGERI 1 KESAMBEN</b></h1>
-        <p>Jalan Bromo Kesamben, Blitar 66191. Telepon (0342) 331397</p>
-        <p>Website: <a href="http://www.sman1kesamben.sch.id" target="_blank">www.sman1kesamben.sch.id</a> | Email: <a href="mailto:info@sman1kesamben.com">info@sman1kesamben.com</a></p>
+        <h2>Student Achievement Management System<br>PORTOFOLIO PRESTASI SISWA</h2>
+        <h1><b>TROPHILE</b></h1>
+        <p>Dokumen Rekam Jejak Prestasi yang Dihasilkan oleh Sistem</p>
     </div>
 
     <div class="judul-dokumen">Portofolio Rekam Jejak Prestasi Siswa</div>
@@ -60,7 +59,7 @@ $tanggal_cetak = date('d') . " " . $bulanIndo[date('n') - 1] . " " . date('Y');
     </table>
 
     <div class="narasi">
-        Sistem Informasi Manajemen Prestasi Siswa (Trophile) menyatakan bahwa siswa yang bersangkutan di atas memiliki rekam jejak prestasi resmi akademik maupun non-akademik yang telah tervalidasi oleh pihak sekolah sebagai berikut:
+        Dokumen ini merupakan portofolio rekam jejak prestasi siswa yang tersimpan dalam Sistem Informasi Manajemen Prestasi Siswa (TROPHILE). Seluruh data prestasi yang ditampilkan telah melalui proses verifikasi berdasarkan dokumen pendukung yang tersedia pada sistem
     </div>
 
     <table class="tabel-prestasi">
@@ -103,6 +102,7 @@ $tanggal_cetak = date('d') . " " . $bulanIndo[date('n') - 1] . " " . date('Y');
             <td>
                 <div class="ttd-box">
                     Kesamben, <?php echo $tanggal_cetak; ?><br>
+                    Mengetahui,<br>
                     Kepala SMAN 1 Kesamben,<br><br>
                     <div class="space-ttd">
                         <img src="../../assets/images/tandatangan.png" alt="Tanda Tangan Kepsek" class="ttd-image">

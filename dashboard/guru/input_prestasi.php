@@ -8,15 +8,14 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != "Guru") {
     exit();
 }
 
-// ================= LOGIKA PENGATURAN AKUN GURU (DIRI SENDIRI) =================
+$nip_guru = $_SESSION['nip'];
+
 if (isset($_POST['edit_profil_guru'])) {
-    $nip_guru  = $_POST['nip_guru'];
+    $nip_guru_edit  = $_POST['nip_guru'];
     $nama_guru = $_POST['nama_guru'];
     $pass_guru = $_POST['pass_guru'];
 
-    mysqli_query($conn, "UPDATE guru SET nama_guru='$nama_guru', PASSWORD='$pass_guru' WHERE nip='$nip_guru'");
-
-    // Update session nama
+    mysqli_query($conn, "UPDATE guru SET nama_guru='$nama_guru', PASSWORD='$pass_guru' WHERE nip='$nip_guru_edit'");
     $_SESSION['nama'] = $nama_guru;
 
     echo "<script>alert('Profil Guru berhasil diperbarui!'); window.location='input_prestasi.php';</script>";
@@ -25,86 +24,80 @@ if (isset($_POST['edit_profil_guru'])) {
 
 $pesan = "";
 
-// ================= LOGIKA INPUT PRESTASI =================
 if ($_SERVER["REQUEST_METHOD"] == "POST" && !isset($_POST['edit_profil_guru'])) {
 
-    // DETEKSI XAMPP DROP LIMIT
     if (empty($_POST) && isset($_SERVER['CONTENT_LENGTH']) && $_SERVER['CONTENT_LENGTH'] > 0) {
-        $pesan = "<div class='alert alert-danger fw-medium'><b>Gagal!</b> Ukuran file terlalu besar. Coba pakai file PDF/Foto di bawah 5MB.</div>";
+        $pesan = "<div class='alert alert-danger fw-medium'><b>Gagal!</b> Ukuran file terlalu besar. Maksimal 5MB per file.</div>";
     } else {
         $nisn                = mysqli_real_escape_string($conn, $_POST['nisn']);
         $nama_lomba          = mysqli_real_escape_string($conn, $_POST['nama_lomba']);
         $tingkat             = mysqli_real_escape_string($conn, $_POST['tingkat']);
         $tanggal_pelaksanaan = mysqli_real_escape_string($conn, $_POST['tgl_lomba']);
         $status_data         = 'Pending';
-        $nip_guru            = $_SESSION['nip'];
-
         $tahun = date('Y', strtotime($tanggal_pelaksanaan));
 
-        $kategori = (isset($_POST['kategori']) && $_POST['kategori'] == "Lainnya")
-            ? mysqli_real_escape_string($conn, $_POST['kategori_lainnya'])
-            : mysqli_real_escape_string($conn, $_POST['kategori']);
-
-        $peringkat = (isset($_POST['peringkat']) && $_POST['peringkat'] == "Lainnya")
-            ? mysqli_real_escape_string($conn, $_POST['peringkat_lainnya'])
-            : mysqli_real_escape_string($conn, $_POST['peringkat']);
+        $kategori = (isset($_POST['kategori']) && $_POST['kategori'] == "Lainnya") ? mysqli_real_escape_string($conn, $_POST['kategori_lainnya']) : mysqli_real_escape_string($conn, $_POST['kategori']);
+        $peringkat = (isset($_POST['peringkat']) && $_POST['peringkat'] == "Lainnya") ? mysqli_real_escape_string($conn, $_POST['peringkat_lainnya']) : mysqli_real_escape_string($conn, $_POST['peringkat']);
 
         $allowed_ext = ['pdf', 'jpg', 'jpeg', 'png'];
-        $nama_asli   = $_FILES['sertifikat']['name'];
-        $tmp_file    = $_FILES['sertifikat']['tmp_name'];
-        $ukuran      = $_FILES['sertifikat']['size'];
-        $error_file  = $_FILES['sertifikat']['error'];
+        $nama_asli_sertif  = $_FILES['sertifikat']['name'];
+        $tmp_file_sertif   = $_FILES['sertifikat']['tmp_name'];
+        $ukuran_sertif     = $_FILES['sertifikat']['size'];
+        $error_sertif      = $_FILES['sertifikat']['error'];
 
-        if ($error_file == 4) {
+        $nama_asli_foto  = $_FILES['foto_penyerahan']['name'];
+        $tmp_file_foto   = $_FILES['foto_penyerahan']['tmp_name'];
+        $ukuran_foto     = $_FILES['foto_penyerahan']['size'];
+        $error_foto      = $_FILES['foto_penyerahan']['error'];
+
+        if ($error_sertif == 4) {
             $pesan = "<div class='alert alert-danger fw-medium'>Pilih file sertifikat/piagam terlebih dahulu!</div>";
         } else {
-            $ext = strtolower(pathinfo($nama_asli, PATHINFO_EXTENSION));
+            $ext_sertif = strtolower(pathinfo($nama_asli_sertif, PATHINFO_EXTENSION));
 
-            if (!in_array($ext, $allowed_ext)) {
-                $pesan = "<div class='alert alert-danger fw-medium'>Format file tidak valid! Gunakan PDF, JPG, atau PNG.</div>";
-            } elseif ($ukuran > 5 * 1024 * 1024) {
-                $pesan = "<div class='alert alert-danger fw-medium'>Ukuran file maksimal adalah 5MB!</div>";
+            if (!in_array($ext_sertif, $allowed_ext)) {
+                $pesan = "<div class='alert alert-danger fw-medium'>Format file Sertifikat tidak valid! Gunakan PDF, JPG, atau PNG.</div>";
+            } elseif ($ukuran_sertif > 5 * 1024 * 1024) {
+                $pesan = "<div class='alert alert-danger fw-medium'>Ukuran file Sertifikat maksimal 5MB!</div>";
             } else {
-                $nama_file = time() . '_' . preg_replace("/[^a-zA-Z0-9]/", "", $nisn) . '_' . preg_replace("/[^a-zA-Z0-9]/", "", $nama_lomba) . '.' . $ext;
-                $folder_tujuan = "../../assets/uploads/" . $nama_file;
+                $nama_file_sertif = time() . '_sertif_' . preg_replace("/[^a-zA-Z0-9]/", "", $nisn) . '.' . $ext_sertif;
+                move_uploaded_file($tmp_file_sertif, "../../assets/uploads/" . $nama_file_sertif);
 
-                if (move_uploaded_file($tmp_file, $folder_tujuan)) {
-                    $query = "INSERT INTO prestasi (
-                                nisn, nip_guru, nama_lomba, kategori, tingkat, peringkat, 
-                                tahun, tanggal_pelaksanaan, file_sertifikat, status_data
-                              ) VALUES (
-                                '$nisn', '$nip_guru', '$nama_lomba', '$kategori', '$tingkat', '$peringkat', 
-                                '$tahun', '$tanggal_pelaksanaan', '$nama_file', '$status_data'
-                              )";
-
-                    if (mysqli_query($conn, $query)) {
-                        echo "<script>alert('Data prestasi berhasil diajukan dan masuk antrean verifikasi!'); window.location='dashboard.php';</script>";
-                        exit();
-                    } else {
-                        $pesan = "<div class='alert alert-danger fw-medium'>Gagal database: " . mysqli_error($conn) . "</div>";
+                $nama_file_foto = "";
+                if ($error_foto == 0) {
+                    $ext_foto = strtolower(pathinfo($nama_asli_foto, PATHINFO_EXTENSION));
+                    if (in_array($ext_foto, ['jpg', 'jpeg', 'png']) && $ukuran_foto <= 5 * 1024 * 1024) {
+                        $nama_file_foto = time() . '_foto_' . preg_replace("/[^a-zA-Z0-9]/", "", $nisn) . '.' . $ext_foto;
+                        move_uploaded_file($tmp_file_foto, "../../assets/uploads/" . $nama_file_foto);
                     }
+                }
+
+                $query = "INSERT INTO prestasi (
+                            nisn, nip_guru, nama_lomba, kategori, tingkat, peringkat, 
+                            tahun, tanggal_pelaksanaan, file_sertifikat, foto_penyerahan, status_data
+                          ) VALUES (
+                            '$nisn', '$nip_guru', '$nama_lomba', '$kategori', '$tingkat', '$peringkat', 
+                            '$tahun', '$tanggal_pelaksanaan', '$nama_file_sertif', '$nama_file_foto', '$status_data'
+                          )";
+
+                if (mysqli_query($conn, $query)) {
+                    echo "<script>alert('Data prestasi berhasil diajukan dan masuk antrean verifikasi!'); window.location='dashboard.php';</script>";
+                    exit();
                 } else {
-                    $pesan = "<div class='alert alert-danger fw-medium'>Gagal memindahkan file! Pastikan folder <b>assets/uploads</b> beneran ada!</div>";
+                    $pesan = "<div class='alert alert-danger fw-medium'>Gagal database: " . mysqli_error($conn) . "</div>";
                 }
             }
         }
     }
 }
 
-// Ambil data profil terbaru untuk modal
-$nip_aktif = $_SESSION['nip'];
-$q_profil = mysqli_query($conn, "SELECT * FROM guru WHERE nip='$nip_aktif'");
+$q_profil = mysqli_query($conn, "SELECT * FROM guru WHERE nip='$nip_guru'");
 $dt_profil = mysqli_fetch_assoc($q_profil);
 
-// DATA SISWA UNTUK DROPDOWN BERTINGKAT (Ubah jadi format JSON)
 $q_all_siswa = mysqli_query($conn, "SELECT nisn, nama_siswa, kelas FROM siswa ORDER BY nama_siswa ASC");
 $data_all_siswa = [];
 while ($row = mysqli_fetch_assoc($q_all_siswa)) {
-    // Kelompokkan siswa berdasarkan kelas
-    $data_all_siswa[$row['kelas']][] = [
-        'nisn' => $row['nisn'],
-        'nama' => $row['nama_siswa']
-    ];
+    $data_all_siswa[$row['kelas']][] = ['nisn' => $row['nisn'], 'nama' => $row['nama_siswa']];
 }
 $json_siswa = json_encode($data_all_siswa);
 ?>
@@ -127,16 +120,15 @@ $json_siswa = json_encode($data_all_siswa);
                 <img src="../../assets/images/SMANSA.png" alt="Logo" width="35">
                 <a href="dashboard.php" class="brand-logo">TROPHILE SMANSA</a>
             </div>
-
             <div class="dropdown">
-                <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" style="border: 1px solid rgba(255,255,255,0.3); padding: 6px 15px; border-radius: 8px;">
+                <a href="javascript:void(0)" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" style="border: 1px solid rgba(255,255,255,0.3); padding: 6px 15px; border-radius: 8px;">
                     <span class="me-2 fw-medium d-none d-md-block">Halo, <?php echo $_SESSION['nama']; ?></span>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="border-radius: 12px; border:none; margin-top:10px;">
                     <li>
                         <h6 class="dropdown-header text-muted">Akses Guru Pembina</h6>
                     </li>
-                    <li><a class="dropdown-item fw-medium" href="#" data-bs-toggle="modal" data-bs-target="#editProfilGuru">⚙️ Pengaturan Akun</a></li>
+                    <li><a class="dropdown-item fw-medium" href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#editProfilGuru">⚙️ Pengaturan Akun</a></li>
                     <li>
                         <hr class="dropdown-divider">
                     </li>
@@ -156,8 +148,6 @@ $json_siswa = json_encode($data_all_siswa);
             <?php echo $pesan; ?>
 
             <form action="" method="POST" enctype="multipart/form-data">
-
-                <!-- ROW DROPDOWN BERTINGKAT (KELAS -> SISWA) -->
                 <div class="row">
                     <div class="col-md-5 mb-4">
                         <label class="form-label">Pilih Kelas</label>
@@ -227,10 +217,21 @@ $json_siswa = json_encode($data_all_siswa);
                     </div>
                 </div>
 
-                <div class="mb-5 p-4 bg-light rounded border border-secondary border-opacity-25">
-                    <label class="form-label text-dark">Upload Bukti Fisik (Sertifikat/Piagam)</label>
-                    <input type="file" name="sertifikat" class="form-control bg-white" accept=".pdf,.jpg,.jpeg,.png" required>
-                    <div class="form-text mt-2"><span class="text-danger fw-medium">*Wajib.</span> Maksimal ukuran file 5MB. Format yang didukung: PDF, JPG, JPEG, PNG.</div>
+                <div class="row mb-5">
+                    <div class="col-md-6 mb-3">
+                        <div class="p-3 bg-light rounded border border-secondary border-opacity-25 h-100">
+                            <label class="form-label text-dark">File Sertifikat/Piagam <span class="text-danger">*</span></label>
+                            <input type="file" name="sertifikat" class="form-control bg-white" accept=".pdf,.jpg,.jpeg,.png" required>
+                            <div class="form-text small">Wajib diisi. Format: PDF, JPG, PNG (Max 5MB)</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="p-3 bg-light rounded border border-secondary border-opacity-25 h-100">
+                            <label class="form-label text-dark">Foto Penyerahan Piala (Opsional)</label>
+                            <input type="file" name="foto_penyerahan" class="form-control bg-white" accept=".jpg,.jpeg,.png">
+                            <div class="form-text small">Disarankan untuk masuk di Galeri Sekolah. Format: JPG, PNG (Max 5MB)</div>
+                        </div>
+                    </div>
                 </div>
 
                 <button type="submit" name="submit_prestasi" class="btn btn-action w-100 py-3 fw-bold" style="font-size: 1.1rem;">Kirim & Ajukan Verifikasi Data</button>
@@ -238,7 +239,6 @@ $json_siswa = json_encode($data_all_siswa);
         </div>
     </div>
 
-    <!-- MODAL PENGATURAN AKUN GURU -->
     <div class="modal fade text-start" id="editProfilGuru" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <form method="POST" class="modal-content custom-modal shadow">
@@ -248,19 +248,18 @@ $json_siswa = json_encode($data_all_siswa);
                 </div>
                 <div class="modal-body">
                     <input type="hidden" name="nip_guru" value="<?php echo $dt_profil['nip'] ?? ''; ?>">
-
                     <div class="mb-3">
-                        <label class="form-label small">NIP (Nomor Induk Pegawai)</label>
+                        <label class="form-label small fw-bold text-navy">NIP (Nomor Induk Pegawai)</label>
                         <input type="text" class="form-control bg-light" value="<?php echo $dt_profil['nip'] ?? ''; ?>" readonly>
                         <div class="form-text small">*NIP digunakan sebagai Username Login dan tidak bisa diubah.</div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label small">Nama Lengkap & Gelar</label>
+                        <label class="form-label small fw-bold text-navy">Nama Lengkap & Gelar</label>
                         <input type="text" name="nama_guru" class="form-control" value="<?php echo $dt_profil['nama_guru'] ?? ''; ?>" required>
                     </div>
                     <div class="mb-2">
-                        <label class="form-label small">Password Akun</label>
-                        <input type="text" name="pass_guru" class="form-control" value="<?php echo $dt_profil['PASSWORD'] ?? ''; ?>" required>
+                        <label class="form-label small fw-bold text-navy">Password Akun</label>
+                        <input type="password" name="pass_guru" class="form-control" value="<?php echo $dt_profil['PASSWORD'] ?? ''; ?>" required>
                     </div>
                 </div>
                 <div class="modal-footer border-0 pt-0">
@@ -271,24 +270,17 @@ $json_siswa = json_encode($data_all_siswa);
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
     <script>
-        // LOGIKA DROPDOWN BERTINGKAT (CASCADING DROPDOWN)
-        // Data siswa dikirim dari PHP ke JavaScript dalam bentuk JSON
         const dataSiswa = <?php echo $json_siswa; ?>;
         const selectKelas = document.getElementById('pilihKelas');
         const selectSiswa = document.getElementById('pilihSiswa');
 
         selectKelas.addEventListener('change', function() {
             const kelasTerpilih = this.value;
-
-            // Bersihkan dropdown siswa
             selectSiswa.innerHTML = '<option value="">-- Silakan Pilih Siswa --</option>';
 
             if (kelasTerpilih && dataSiswa[kelasTerpilih]) {
-                selectSiswa.disabled = false; // Buka kunci dropdown siswa
-
-                // Looping data siswa berdasarkan kelas yang dipilih
+                selectSiswa.disabled = false;
                 dataSiswa[kelasTerpilih].forEach(function(siswa) {
                     const option = document.createElement('option');
                     option.value = siswa.nisn;
@@ -296,13 +288,11 @@ $json_siswa = json_encode($data_all_siswa);
                     selectSiswa.appendChild(option);
                 });
             } else {
-                // Kalau kelas dikosongin, dropdown siswa dikunci lagi
                 selectSiswa.disabled = true;
                 selectSiswa.innerHTML = '<option value="">-- Silakan Pilih Kelas Dulu --</option>';
             }
         });
 
-        // LOGIKA KATEGORI & PERINGKAT LAINNYA
         function checkKategori(val) {
             const inputKategori = document.getElementById('kategoriLainnyaInput');
             if (val === 'Lainnya') {
