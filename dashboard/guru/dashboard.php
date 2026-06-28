@@ -518,6 +518,7 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'data';
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../../assets/js/remember-tab.js"></script>
     <script>
         document.querySelectorAll('.mode-select').forEach(select => {
             select.addEventListener('change', function() {

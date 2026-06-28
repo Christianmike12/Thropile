@@ -276,7 +276,7 @@ $nama_tampil = $_SESSION['nama'] ?? ($dt_sa['nama_super_admin'] ?? 'Master Admin
                     <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between mb-4 gap-3">
                         <h6 class="fw-bold m-0 text-navy" style="font-size: 1.1rem;">Data Siswa</h6>
                         <div class="d-flex action-wrapper gap-2 ms-md-auto">
-                            <button class="btn btn-warning fw-bold text-nowrap" data-bs-toggle="modal" data-bs-target="#kenaikanMassal">🚀 Kelola Kenaikan Kelas</button>
+                            <button class="btn btn-warning fw-bold text-nowrap" data-bs-toggle="modal" data-bs-target="#kenaikanMassal">Kelola Kenaikan Kelas</button>
                             <input type="text" id="searchSiswa" class="form-control search-input" placeholder="Cari NISN / Nama..." style="min-width: 200px;">
                             <button class="btn btn-action text-nowrap" data-bs-toggle="modal" data-bs-target="#addSiswa">+ Tambah Siswa</button>
                         </div>
@@ -591,6 +591,7 @@ $nama_tampil = $_SESSION['nama'] ?? ($dt_sa['nama_super_admin'] ?? 'Master Admin
     <?php } ?>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../../assets/js/remember-tab.js"></script>
 
     <script>
         function toggleKelasBaru() {

@@ -270,6 +270,7 @@ $json_siswa = json_encode($data_all_siswa);
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../../assets/js/remember-tab.js"></script>
     <script>
         const dataSiswa = <?php echo $json_siswa; ?>;
         const selectKelas = document.getElementById('pilihKelas');

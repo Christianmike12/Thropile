@@ -75,11 +75,11 @@ $nama_tampil = $_SESSION['nama'] ?? 'Petugas TU';
                     <li>
                         <h6 class="dropdown-header text-muted">Akses Admin TU</h6>
                     </li>
-                    <li><a class="dropdown-item fw-medium" href="#" data-bs-toggle="modal" data-bs-target="#editProfilTU">⚙️ Pengaturan Akun</a></li>
+                    <li><a class="dropdown-item fw-medium" href="#" data-bs-toggle="modal" data-bs-target="#editProfilTU">Pengaturan Akun</a></li>
                     <li>
                         <hr class="dropdown-divider">
                     </li>
-                    <li><a class="dropdown-item text-danger fw-bold" href="../../logout.php">🚪 Keluar</a></li>
+                    <li><a class="dropdown-item text-danger fw-bold" href="../../logout.php">Keluar</a></li>
                 </ul>
             </div>
         </div>
@@ -223,7 +223,7 @@ $nama_tampil = $_SESSION['nama'] ?? 'Petugas TU';
                                             <td class='text-start'>
                                                 <div class='fw-bold v-nama'><?php echo htmlspecialchars($r['nama_siswa']); ?></div>
                                                 <div class="small text-muted mb-1">Kelas <?php echo htmlspecialchars($r['kelas']); ?></div>
-                                                <div class="small fw-medium text-navy" style="font-size: 0.8rem;">👨‍🏫 Pembina: <?php echo htmlspecialchars($nama_guru); ?></div>
+                                                <div class="small fw-medium text-navy" style="font-size: 0.8rem;">Pembina: <?php echo htmlspecialchars($nama_guru); ?></div>
                                             </td>
                                             <td class='text-start v-lomba fw-medium'><?php echo htmlspecialchars($r['nama_lomba']); ?></td>
                                             <td><span class='badge bg-warning text-dark'><?php echo htmlspecialchars($r['peringkat']); ?></span></td>
@@ -387,6 +387,7 @@ $nama_tampil = $_SESSION['nama'] ?? 'Petugas TU';
     <div id="modalContainerRekap"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../../assets/js/remember-tab.js"></script>
     <script>
         document.querySelectorAll('.mode-select').forEach(select => {
             select.addEventListener('change', function() {
