@@ -117,8 +117,8 @@ $json_siswa = json_encode($data_all_siswa);
     <nav class="navbar-custom">
         <div class="nav-container">
             <div class="brand-wrapper">
-                <img src="../../assets/images/SMANSA.png" alt="Logo" width="35">
-                <a href="dashboard.php" class="brand-logo">TROPHILE SMANSA</a>
+                <img src="../../assets/images/logo.png" alt="Logo" width="35">
+                <a href="dashboard.php" class="brand-logo">TROPHILE</a>
             </div>
             <div class="dropdown">
                 <a href="javascript:void(0)" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" style="border: 1px solid rgba(255,255,255,0.3); padding: 6px 15px; border-radius: 8px;">

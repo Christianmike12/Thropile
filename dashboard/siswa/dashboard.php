@@ -75,7 +75,7 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'riwayat';
     <nav class="navbar-custom">
         <div class="nav-container">
             <div class="brand-wrapper">
-                <img src="../../assets/images/SMANSA.png" alt="Logo" width="35">
+                <img src="../../assets/images/logo.png" alt="Logo" width="35">
                 <a href="dashboard.php" class="brand-logo">TROPHILE</a>
             </div>
 
@@ -209,7 +209,7 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'riwayat';
                     </div>
 
                     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
-                        <h6 class="fw-bold m-0 text-navy">Wall of Fame SMANSA</h6>
+                        <h6 class="fw-bold m-0 text-navy">Wall of Fame</h6>
                         <input type="text" id="searchGaleri" class="form-control" placeholder="Cari Nama Lomba / Siswa..." style="max-width: 300px; border-radius:8px;" onkeydown="if(event.key === 'Enter') { event.preventDefault(); return false; }">
                     </div>
 
@@ -223,7 +223,7 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'riwayat';
                                 $images = [];
                                 if (!empty($g['foto_penyerahan'])) $images[] = $g['foto_penyerahan'];
                                 if (!empty($g['file_sertifikat'])) $images[] = $g['file_sertifikat'];
-                                if (empty($images)) $images[] = 'SMANSA.png';
+                                if (empty($images)) $images[] = 'logo.png';
 
                                 $tanggal_format = date('d M Y', strtotime($g['tanggal_pelaksanaan'] ?? date('Y-m-d')));
                         ?>
@@ -236,7 +236,7 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'riwayat';
                                                     $active = $idx === 0 ? 'active' : '';
                                                 ?>
                                                     <div class="carousel-item <?php echo $active; ?> h-100">
-                                                        <img src="../../assets/uploads/<?php echo rawurlencode($img); ?>" class="galeri-img d-block w-100" alt="Dokumentasi" onerror="this.onerror=null; this.src='../../assets/images/SMANSA.png';">
+                                                        <img src="../../assets/uploads/<?php echo rawurlencode($img); ?>" class="galeri-img d-block w-100" alt="Dokumentasi" onerror="this.onerror=null; this.src='../../assets/images/logo.png';">
                                                     </div>
                                                 <?php } ?>
                                             </div>
@@ -279,7 +279,7 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'riwayat';
         $images_modal = [];
         if (!empty($rk['foto_penyerahan'])) $images_modal[] = $rk['foto_penyerahan'];
         if (!empty($rk['file_sertifikat'])) $images_modal[] = $rk['file_sertifikat'];
-        if (empty($images_modal)) $images_modal[] = 'SMANSA.png';
+        if (empty($images_modal)) $images_modal[] = 'logo.png';
     ?>
         <div class="modal fade" id="previewModalSiswa<?php echo $rk['id_prestasi']; ?>" tabindex="-1">
             <div class="modal-dialog modal-dialog-centered modal-lg">
@@ -296,7 +296,7 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'riwayat';
                                     $active = $idx === 0 ? 'active' : '';
                                 ?>
                                     <div class="carousel-item <?php echo $active; ?>">
-                                        <img src="../../assets/uploads/<?php echo rawurlencode($img); ?>" class="img-fluid rounded shadow-sm d-block mx-auto" alt="Dokumentasi" style="max-height: 70vh; object-fit: contain;" onerror="this.onerror=null; this.src='../../assets/images/SMANSA.png';">
+                                        <img src="../../assets/uploads/<?php echo rawurlencode($img); ?>" class="img-fluid rounded shadow-sm d-block mx-auto" alt="Dokumentasi" style="max-height: 70vh; object-fit: contain;" onerror="this.onerror=null; this.src='../../assets/images/logo.png';">
                                     </div>
                                 <?php } ?>
                             </div>

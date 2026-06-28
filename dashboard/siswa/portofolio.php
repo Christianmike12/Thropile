@@ -32,7 +32,7 @@ $tanggal_cetak = date('d') . " " . $bulanIndo[date('n') - 1] . " " . date('Y');
 
 <body>
     <div class="kop-surat">
-        <img src="../../assets/images/SMANSA.png" alt="Logo SMANSA" style="position:absolute;left:15px;top:0;width:120px;height:auto;">
+        <img src="../../assets/images/logo.png" alt="Logo" style="position:absolute;left:15px;top:0;width:120px;height:auto;">
         <h2>Student Achievement Management System<br>PORTOFOLIO PRESTASI SISWA</h2>
         <h1><b>TROPHILE</b></h1>
         <p>Dokumen Rekam Jejak Prestasi yang Dihasilkan oleh Sistem</p>
@@ -103,10 +103,10 @@ $tanggal_cetak = date('d') . " " . $bulanIndo[date('n') - 1] . " " . date('Y');
                 <div class="ttd-box">
                     Kesamben, <?php echo $tanggal_cetak; ?><br>
                     Mengetahui,<br>
-                    Kepala SMAN 1 Kesamben,<br><br>
+                    Kepala Seko,<br><br>
                     <div class="space-ttd">
                         <img src="../../assets/images/tandatangan.png" alt="Tanda Tangan Kepsek" class="ttd-image">
-                        <img src="../../assets/images/stempel.PNG" alt="Stempel Resmi SMANSA" class="stempel-image">
+                        <img src="../../assets/images/stempel.png" alt="Stempel Resmi" class="stempel-image">
                     </div>
                     <span style="text-decoration:underline;font-weight:bold;position:relative;z-index:3;">
                         <?php echo htmlspecialchars($data_kepsek['nama_kepala_sekolah'] ?? ''); ?>

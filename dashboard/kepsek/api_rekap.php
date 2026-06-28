@@ -82,7 +82,7 @@ if ($q_data && mysqli_num_rows($q_data) > 0) {
         $images = [];
         if (!empty($r['foto_penyerahan'])) $images[] = $r['foto_penyerahan'];
         if (!empty($r['file_sertifikat'])) $images[] = $r['file_sertifikat'];
-        if (empty($images)) $images[] = 'SMANSA.png';
+        if (empty($images)) $images[] = 'logo.png';
 
         $html_galeri .= "<div class='col-12 col-md-6 col-lg-4 galeri-item'>
             <div class='galeri-card' data-bs-toggle='modal' data-bs-target='#previewModalKepsek$id_p' style='cursor: pointer;'>
@@ -92,7 +92,7 @@ if ($q_data && mysqli_num_rows($q_data) > 0) {
             $active = $idx === 0 ? 'active' : '';
             $enc_img = rawurlencode($img);
             $html_galeri .= "<div class='carousel-item $active h-100'>
-                <img src='../../assets/uploads/$enc_img' class='galeri-img d-block w-100' alt='Dokumentasi' onerror=\"this.onerror=null; this.src='../../assets/images/SMANSA.png';\">
+                <img src='../../assets/uploads/$enc_img' class='galeri-img d-block w-100' alt='Dokumentasi' onerror=\"this.onerror=null; this.src='../../assets/images/logo.png';\">
             </div>";
         }
         $html_galeri .= "</div><div class='galeri-badge-top'>🏆 $kategori</div></div>
@@ -121,7 +121,7 @@ if ($q_data && mysqli_num_rows($q_data) > 0) {
             $active = $idx === 0 ? 'active' : '';
             $enc_img = rawurlencode($img);
             $html_modal .= "<div class='carousel-item $active'>
-                <img src='../../assets/uploads/$enc_img' class='img-fluid rounded shadow-sm d-block mx-auto' style='max-height:70vh;object-fit:contain;' onerror=\"this.onerror=null; this.src='../../assets/images/SMANSA.png';\">
+                <img src='../../assets/uploads/$enc_img' class='img-fluid rounded shadow-sm d-block mx-auto' style='max-height:70vh;object-fit:contain;' onerror=\"this.onerror=null; this.src='../../assets/images/logo.png';\">
             </div>";
         }
         $html_modal .= "</div>";

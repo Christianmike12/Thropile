@@ -63,7 +63,7 @@ $nama_tampil = $_SESSION['nama'] ?? 'Petugas TU';
     <nav class="navbar-custom">
         <div class="nav-container">
             <div class="brand-wrapper d-flex align-items-center gap-2">
-                <img src="../../assets/images/SMANSA.png" alt="Logo" width="35">
+                <img src="../../assets/images/logo.png" alt="Logo" width="35">
                 <a href="dashboard.php" class="brand-logo text-decoration-none">TROPHILE</a>
             </div>
 
@@ -377,7 +377,7 @@ $nama_tampil = $_SESSION['nama'] ?? 'Petugas TU';
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body text-center p-4 bg-light">
-                        <img src="../../assets/uploads/<?php echo $file_aman; ?>" class="img-fluid rounded shadow-sm" alt="Sertifikat" style="max-height: 70vh; object-fit: contain;" onerror="this.onerror=null; this.src='../../assets/images/SMANSA.png';">
+                        <img src="../../assets/uploads/<?php echo $file_aman; ?>" class="img-fluid rounded shadow-sm" alt="Sertifikat" style="max-height: 70vh; object-fit: contain;" onerror="this.onerror=null; this.src='../../assets/images/logo.png';">
                     </div>
                 </div>
             </div>

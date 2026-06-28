@@ -83,7 +83,7 @@ $dt_profil_kepsek = mysqli_fetch_assoc($q_profil_kepsek);
 <body>
     <nav class="navbar-custom">
         <div class="nav-container">
-            <div class="brand-wrapper"><img src="../../assets/images/SMANSA.png" width="35" alt="Logo"><a href="dashboard.php" class="brand-logo text-decoration-none">TROPHILE</a></div>
+            <div class="brand-wrapper"><img src="../../assets/images/logo.png" width="35" alt="Logo"><a href="dashboard.php" class="brand-logo text-decoration-none">TROPHILE</a></div>
             <div class="dropdown">
                 <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" style="border: 1px solid rgba(255,255,255,0.3); padding: 6px 15px; border-radius: 8px;">
                     <span class="me-2 fw-medium d-none d-md-block">Halo, <?php echo htmlspecialchars($_SESSION['nama']); ?></span>

@@ -153,7 +153,7 @@ $nama_tampil = $_SESSION['nama'] ?? ($dt_sa['nama_super_admin'] ?? 'Master Admin
     <nav class="navbar-custom">
         <div class="nav-container">
             <div class="brand-wrapper d-flex align-items-center gap-2">
-                <img src="../../assets/images/SMANSA.png" alt="Logo" width="35">
+                <img src="../../assets/images/logo.png" alt="Logo" width="35">
                 <a href="#" class="brand-logo d-none d-md-block">TROPHILE</a>
             </div>
             <div class="dropdown">

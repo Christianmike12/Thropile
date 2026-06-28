@@ -38,7 +38,7 @@ if ($mode_filter == 'bulan') {
     $judul_periode = "Keseluruhan Waktu";
 }
 
-$narasi = "Sistem Informasi Manajemen Prestasi Siswa (Trophile) menyatakan bahwa rekapitulasi di bawah ini memuat rekam jejak prestasi resmi akademik maupun non-akademik siswa SMAN 1 Kesamben yang telah tervalidasi oleh pihak sekolah.";
+$narasi = "Sistem Informasi Manajemen Prestasi Siswa (Trophile) menyatakan bahwa rekapitulasi di bawah ini memuat rekam jejak prestasi resmi akademik maupun non-akademik siswa yang telah tervalidasi oleh pihak sekolah.";
 
 $q_rekap = mysqli_query($conn, "SELECT p.*, s.nama_siswa, s.kelas FROM prestasi p JOIN siswa s ON p.nisn = s.nisn WHERE $where ORDER BY FIELD(p.tingkat,'Internasional','Nasional','Provinsi','Kota/Kabupaten'), p.peringkat ASC, s.kelas ASC");
 
@@ -57,7 +57,7 @@ $tanggal_cetak = date('d') . " " . $bulanIndo[date('n')] . " " . date('Y');
 
 <body>
     <div class="kop-surat">
-        <img src="../../assets/images/SMANSA.png" alt="Logo SMANSA">
+        <img src="../../assets/images/logo.png" alt="Logo Trophile">
         <h2>Student Achievement Management System<br>PORTOFOLIO PRESTASI SISWA</h2>
         <h1><b>TROPHILE</b></h1>
         <p>Dokumen Rekam Jejak Prestasi yang Dihasilkan oleh Sistem</p>
@@ -106,10 +106,10 @@ $tanggal_cetak = date('d') . " " . $bulanIndo[date('n')] . " " . date('Y');
         <div class="ttd-box">
             Kesamben, <?php echo $tanggal_cetak; ?>
             Mengetahui,<br>
-            <br>Kepala SMAN 1 Kesamben,
+            <br>Kepala Sekolah,
             <div class="space-ttd">
                 <img src="../../assets/images/tandatangan.png" alt="Tanda Tangan" class="ttd-image">
-                <img src="../../assets/images/stempel.PNG" alt="Stempel" class="stempel-image">
+                <img src="../../assets/images/stempel.png" alt="Stempel" class="stempel-image">
             </div>
             <span style="text-decoration:underline;font-weight:bold;position:relative;z-index:3;">
                 <?php echo htmlspecialchars($data_kepsek['nama_kepala_sekolah'] ?? ''); ?>

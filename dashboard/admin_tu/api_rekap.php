@@ -70,7 +70,7 @@ if ($q_rekap && mysqli_num_rows($q_rekap) > 0) {
                         <button type='button' class='btn-close btn-close-white' data-bs-dismiss='modal'></button>
                     </div>
                     <div class='modal-body text-center p-4 bg-light'>
-                        <img src='../../assets/uploads/$file' class='img-fluid rounded shadow-sm' style='max-height: 70vh; object-fit: contain;' onerror=\"this.onerror=null; this.src='../../assets/images/SMANSA.png';\">
+                        <img src='../../assets/uploads/$file' class='img-fluid rounded shadow-sm' style='max-height: 70vh; object-fit: contain;' onerror=\"this.onerror=null; this.src='../../assets/images/logo.png';\">
                     </div>
                 </div>
             </div>
