@@ -426,7 +426,7 @@ $nama_tampil = $_SESSION['nama'] ?? ($dt_sa['nama_super_admin'] ?? 'Master Admin
         <div class="modal-dialog modal-dialog-centered">
             <form method="POST" class="modal-content custom-modal">
                 <div class="modal-header">
-                    <h5 class="modal-title fw-bold">🚀 Kenaikan Kelas / Kelulusan Massal</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    <h5 class="modal-title fw-bold">Kenaikan Kelas / Kelulusan Massal</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <div class="alert alert-info border-0 small mb-3">Fitur ini akan memindahkan <b>seluruh siswa aktif</b> di kelas asal ke kelas tujuan atau mengubah status mereka menjadi lulus secara bersamaan.</div>

@@ -415,7 +415,7 @@ $nama_tampil = $_SESSION['nama'] ?? 'Petugas TU';
             const tabelBody = document.getElementById('tabelRekapBody');
             const modalWadah = document.getElementById('modalContainerRekap');
 
-            tabelBody.innerHTML = "<tr><td colspan='7' class='py-4 fw-bold text-navy'>⏳ Sedang Memuat Data...</td></tr>";
+            tabelBody.innerHTML = "<tr><td colspan='7' class='py-4 fw-bold text-navy'>Sedang Memuat Data...</td></tr>";
 
             try {
                 const response = await fetch('api_rekap.php', {
@@ -426,7 +426,7 @@ $nama_tampil = $_SESSION['nama'] ?? 'Petugas TU';
                 tabelBody.innerHTML = result.tabel;
                 modalWadah.innerHTML = result.modal;
             } catch (error) {
-                tabelBody.innerHTML = "<tr><td colspan='7' class='py-4 text-danger fw-bold'>❌ Gagal mengambil data.</td></tr>";
+                tabelBody.innerHTML = "<tr><td colspan='7' class='py-4 text-danger fw-bold'>Gagal mengambil data.</td></tr>";
             }
         }
 

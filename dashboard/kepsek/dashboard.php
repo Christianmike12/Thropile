@@ -121,7 +121,7 @@ $dt_profil_kepsek = mysqli_fetch_assoc($q_profil_kepsek);
                                     <span style="font-size:20px;margin-right:10px;"></span>
                                     <h5 style="margin:0;font-weight:700;color:#002b5c;font-size:15px;">Trophile AI™ Insights</h5>
                                 </div>
-                                <span class="ai-indicator" id="aiIndicator">Klik untuk baca 📌</span>
+                                <span class="ai-indicator" id="aiIndicator">Klik untuk baca</span>
                             </div>
                             <div class="ai-content">
                                 <p><?php echo $teks_ai; ?></p>
@@ -351,8 +351,8 @@ $dt_profil_kepsek = mysqli_fetch_assoc($q_profil_kepsek);
             const form = document.getElementById(formId);
             const formData = new FormData(form);
 
-            if (target === 'rekap') document.getElementById('tabelRekapBody').innerHTML = "<tr><td colspan='7' class='py-4 fw-bold text-navy'>⏳ Memuat Data...</td></tr>";
-            else document.getElementById('galeriContainer').innerHTML = "<div class='col-12 text-center py-4 fw-bold text-navy'>⏳ Memuat Galeri...</div>";
+            if (target === 'rekap') document.getElementById('tabelRekapBody').innerHTML = "<tr><td colspan='7' class='py-4 fw-bold text-navy'>Memuat Data...</td></tr>";
+            else document.getElementById('galeriContainer').innerHTML = "<div class='col-12 text-center py-4 fw-bold text-navy'>Memuat Galeri...</div>";
 
             try {
                 const response = await fetch('api_rekap.php', {
@@ -404,11 +404,11 @@ $dt_profil_kepsek = mysqli_fetch_assoc($q_profil_kepsek);
                 isPinned = !isPinned;
                 if (isPinned) {
                     aiCard.classList.add('buka');
-                    aiIndicator.innerHTML = '📌 Tersemat';
+                    aiIndicator.innerHTML = 'Tersemat';
                     aiIndicator.style.background = '#ffcc00';
                     aiIndicator.style.color = '#002b5c';
                 } else {
-                    aiIndicator.innerHTML = 'Klik untuk baca 📌';
+                    aiIndicator.innerHTML = 'Klik untuk baca';
                     aiIndicator.style.background = '#f4f6f9';
                     aiIndicator.style.color = '#6c757d';
                 }
