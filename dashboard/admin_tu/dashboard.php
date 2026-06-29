@@ -14,7 +14,17 @@ if (isset($_POST['edit_profil_tu'])) {
     $user_tu = $_POST['user_tu'];
     $pass_tu = $_POST['pass_tu'];
 
-    mysqli_query($conn, "UPDATE admin_tu SET nama_admin='$nama_tu', username='$user_tu', PASSWORD='$pass_tu' WHERE nip='$nip_tu'");
+    if (!empty($pass_tu)) {
+        if (strlen($pass_tu) < 8 || !preg_match("/[a-zA-Z]/", $pass_tu) || !preg_match("/\d/", $pass_tu)) {
+            echo "<script>alert('Password minimal 8 karakter, serta harus mengandung kombinasi huruf dan angka!'); window.history.back();</script>";
+            exit();
+        }
+        $pass_tu_hash = password_hash($pass_tu, PASSWORD_DEFAULT);
+        mysqli_query($conn, "UPDATE admin_tu SET nama_admin='$nama_tu', username='$user_tu', PASSWORD='$pass_tu_hash' WHERE nip='$nip_tu'");
+    } else {
+        mysqli_query($conn, "UPDATE admin_tu SET nama_admin='$nama_tu', username='$user_tu' WHERE nip='$nip_tu'");
+    }
+    
     $_SESSION['nama'] = $nama_tu;
     $_SESSION['username'] = $user_tu;
     echo "<script>alert('Profil Admin TU berhasil diperbarui!'); window.location='dashboard.php';</script>";
@@ -329,8 +339,8 @@ $nama_tampil = $_SESSION['nama'] ?? 'Petugas TU';
                         <input type="text" name="user_tu" class="form-control" value="<?php echo htmlspecialchars($dt_profil['username'] ?? ''); ?>" required>
                     </div>
                     <div class="mb-2">
-                        <label class="form-label text-navy fw-semibold small">Password Akun</label>
-                        <input type="text" name="pass_tu" class="form-control" value="<?php echo htmlspecialchars($dt_profil['PASSWORD'] ?? ''); ?>" required>
+                        <label class="form-label text-navy fw-semibold small">Password Akun (Kosongkan jika tidak diubah)</label>
+                        <input type="password" name="pass_tu" class="form-control" placeholder="Minimal 8 karakter, kombinasi huruf & angka" pattern="(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}" title="Password minimal 8 karakter, mengandung huruf dan angka">
                     </div>
                 </div>
                 <div class="modal-footer border-0 pt-0 px-4 pb-4">

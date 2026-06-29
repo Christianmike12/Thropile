@@ -53,6 +53,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['form_type'])) {
 
         if ($password_baru !== $verif_password) {
             $response = ['status' => 'error', 'msg' => "Gagal! Verifikasi password baru tidak cocok."];
+        } else if (strlen($password_baru) < 8 || !preg_match("/[a-zA-Z]/", $password_baru) || !preg_match("/\d/", $password_baru)) {
+            $response = ['status' => 'error', 'msg' => "Password minimal 8 karakter, serta mengandung huruf dan angka."];
         } else {
             $cek_req = mysqli_query($conn, "SELECT * FROM request_reset WHERE username='$username' AND kode_unik='$kode_admin' AND status_req='Approved'");
             if (mysqli_num_rows($cek_req) > 0) {
@@ -168,11 +170,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['form_type'])) {
                         </div>
                         <div class="form-group">
                             <label>Password Baru</label>
-                            <input type="password" name="password_baru" class="form-input" placeholder="Masukkan sandi baru" required>
+                            <input type="password" name="password_baru" class="form-input" placeholder="Min 8 karakter, kombinasi huruf & angka" required pattern="(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}" title="Password minimal 8 karakter, mengandung huruf dan angka">
                         </div>
                         <div class="form-group">
                             <label>Verifikasi Password</label>
-                            <input type="password" name="verifikasi_password_baru" class="form-input" placeholder="Ulangi sandi baru" required>
+                            <input type="password" name="verifikasi_password_baru" class="form-input" placeholder="Ulangi sandi baru" required pattern="(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}" title="Password minimal 8 karakter, mengandung huruf dan angka">
                         </div>
                         <button type="submit" id="btn-submit-reset" class="btn-auth">Simpan Password Baru</button>
                     </form>

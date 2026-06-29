@@ -17,8 +17,16 @@ if (isset($_POST['edit_profil_sa'])) {
     $user_sa = mysqli_real_escape_string($conn, $_POST['user_sa']);
     $pass_sa = trim($_POST['pass_sa']);
 
-    $pass_sa_hash = password_hash($pass_sa, PASSWORD_DEFAULT);
-    mysqli_query($conn, "UPDATE super_admin SET nama_super_admin='$nama_sa', username='$user_sa', password='$pass_sa_hash' WHERE id_super_admin='$id_sa'");
+    if (!empty($pass_sa)) {
+        if (strlen($pass_sa) < 8 || !preg_match("/[a-zA-Z]/", $pass_sa) || !preg_match("/\d/", $pass_sa)) {
+            echo "<script>alert('Password minimal 8 karakter, serta harus mengandung kombinasi huruf dan angka!'); window.history.back();</script>";
+            exit();
+        }
+        $pass_sa_hash = password_hash($pass_sa, PASSWORD_DEFAULT);
+        mysqli_query($conn, "UPDATE super_admin SET nama_super_admin='$nama_sa', username='$user_sa', password='$pass_sa_hash' WHERE id_super_admin='$id_sa'");
+    } else {
+        mysqli_query($conn, "UPDATE super_admin SET nama_super_admin='$nama_sa', username='$user_sa' WHERE id_super_admin='$id_sa'");
+    }
 
     $_SESSION['username'] = $user_sa;
     $_SESSION['nama'] = $nama_sa;
@@ -466,7 +474,7 @@ $nama_tampil = $_SESSION['nama'] ?? ($dt_sa['nama_super_admin'] ?? 'Master Admin
                     <input type="hidden" name="id_sa" value="<?php echo $dt_sa['id_super_admin'] ?? ''; ?>">
                     <div class="mb-3"><label class="form-label">Nama Tampilan</label><input type="text" name="nama_sa" class="form-control" value="<?php echo $dt_sa['nama_super_admin'] ?? ''; ?>" required></div>
                     <div class="mb-3"><label class="form-label">Username Login</label><input type="text" name="user_sa" class="form-control" value="<?php echo $dt_sa['username'] ?? ''; ?>" required></div>
-                    <div class="mb-2"><label class="form-label">Password Akun Baru</label><input type="password" name="pass_sa" class="form-control" placeholder="Wajib diisi password baru..." required></div>
+                    <div class="mb-2"><label class="form-label">Password Akun Baru (Kosongkan jika tidak diubah)</label><input type="password" name="pass_sa" class="form-control" placeholder="Minimal 8 karakter, kombinasi huruf & angka" pattern="(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}" title="Password minimal 8 karakter, mengandung huruf dan angka"></div>
                 </div>
                 <div class="modal-footer border-0 pt-0"><button type="submit" name="edit_profil_sa" class="btn btn-action w-100">Simpan Pengaturan</button></div>
             </form>

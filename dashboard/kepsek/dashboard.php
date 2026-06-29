@@ -14,7 +14,16 @@ if (isset($_POST['edit_profil_kepsek'])) {
     $user_kepsek = $_POST['user_kepsek'];
     $pass_kepsek = $_POST['pass_kepsek'];
 
-    mysqli_query($conn, "UPDATE kepala_sekolah SET nama_kepala_sekolah='$nama_kepsek', username='$user_kepsek', PASSWORD='$pass_kepsek' WHERE nip='$nip_kepsek'");
+    if (!empty($pass_kepsek)) {
+        if (strlen($pass_kepsek) < 8 || !preg_match("/[a-zA-Z]/", $pass_kepsek) || !preg_match("/\d/", $pass_kepsek)) {
+            echo "<script>alert('Password minimal 8 karakter, serta harus mengandung kombinasi huruf dan angka!'); window.history.back();</script>";
+            exit();
+        }
+        $pass_kepsek_hash = password_hash($pass_kepsek, PASSWORD_DEFAULT);
+        mysqli_query($conn, "UPDATE kepala_sekolah SET nama_kepala_sekolah='$nama_kepsek', username='$user_kepsek', PASSWORD='$pass_kepsek_hash' WHERE nip='$nip_kepsek'");
+    } else {
+        mysqli_query($conn, "UPDATE kepala_sekolah SET nama_kepala_sekolah='$nama_kepsek', username='$user_kepsek' WHERE nip='$nip_kepsek'");
+    }
 
     $_SESSION['nama'] = $nama_kepsek;
     $_SESSION['username'] = $user_kepsek;
@@ -319,7 +328,7 @@ $dt_profil_kepsek = mysqli_fetch_assoc($q_profil_kepsek);
                     <div class="mb-3"><label class="form-label text-navy fw-semibold small">NIP</label><input type="text" class="form-control bg-light" value="<?php echo htmlspecialchars($dt_profil_kepsek['nip'] ?? ''); ?>" readonly></div>
                     <div class="mb-3"><label class="form-label text-navy fw-semibold small">Nama Lengkap & Gelar</label><input type="text" name="nama_kepsek" class="form-control" value="<?php echo htmlspecialchars($dt_profil_kepsek['nama_kepala_sekolah'] ?? ''); ?>" required></div>
                     <div class="mb-3"><label class="form-label text-navy fw-semibold small">Username</label><input type="text" name="user_kepsek" class="form-control" value="<?php echo htmlspecialchars($dt_profil_kepsek['username'] ?? ''); ?>" required></div>
-                    <div class="mb-2"><label class="form-label text-navy fw-semibold small">Password Akun</label><input type="text" name="pass_kepsek" class="form-control" value="<?php echo htmlspecialchars($dt_profil_kepsek['PASSWORD'] ?? ''); ?>" required></div>
+                    <div class="mb-2"><label class="form-label text-navy fw-semibold small">Password Akun (Kosongkan jika tidak diubah)</label><input type="password" name="pass_kepsek" class="form-control" placeholder="Min 8 karakter, kombinasi huruf & angka" pattern="(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}" title="Password minimal 8 karakter, mengandung huruf dan angka"></div>
                 </div>
                 <div class="modal-footer border-0 pt-0 px-4 pb-4">
                     <button type="submit" name="edit_profil_kepsek" class="btn w-100 fw-bold" style="background-color: #ffcc00; color:#002b5c; border-radius:8px; padding:10px;">Simpan Pengaturan</button>
