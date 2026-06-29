@@ -4,12 +4,13 @@ require '../../koneksi.php';
 /** @var mysqli $conn */
 
 if (!isset($_SESSION['role']) || $_SESSION['role'] != "Super Admin") {
-    header("Location: ../../index.php");
+    header("Location: ../../login.php"); // <-- Ingat, ini udah disesuaikan ke login.php ya!
     exit();
 }
 
 $pass_default_hash = password_hash('123', PASSWORD_DEFAULT);
 
+// --- [AKSI EDIT PROFIL] ---
 if (isset($_POST['edit_profil_sa'])) {
     $id_sa   = mysqli_real_escape_string($conn, $_POST['id_sa']);
     $nama_sa = mysqli_real_escape_string($conn, $_POST['nama_sa']);
@@ -21,11 +22,11 @@ if (isset($_POST['edit_profil_sa'])) {
 
     $_SESSION['username'] = $user_sa;
     $_SESSION['nama'] = $nama_sa;
-
     echo "<script>alert('Profil Super Admin berhasil diperbarui!'); window.location='dashboard.php';</script>";
     exit();
 }
 
+// --- [AKSI TAMBAH DATA] ---
 if (isset($_POST['tambah_admin'])) {
     $nip  = mysqli_real_escape_string($conn, $_POST['nip']);
     $nama = mysqli_real_escape_string($conn, $_POST['nama_admin']);
@@ -34,6 +35,7 @@ if (isset($_POST['tambah_admin'])) {
     header("Location: dashboard.php");
     exit();
 }
+
 if (isset($_POST['tambah_guru'])) {
     $nip  = mysqli_real_escape_string($conn, $_POST['nip']);
     $nama = mysqli_real_escape_string($conn, $_POST['nama_guru']);
@@ -41,14 +43,7 @@ if (isset($_POST['tambah_guru'])) {
     header("Location: dashboard.php");
     exit();
 }
-if (isset($_POST['tambah_siswa'])) {
-    $nisn  = mysqli_real_escape_string($conn, $_POST['nisn']);
-    $nama  = mysqli_real_escape_string($conn, $_POST['nama_siswa']);
-    $kelas = mysqli_real_escape_string($conn, $_POST['kelas']);
-    mysqli_query($conn, "INSERT INTO siswa (nisn, nama_siswa, kelas, password, status) VALUES ('$nisn', '$nama', '$kelas', '$pass_default_hash', 'Aktif')");
-    header("Location: dashboard.php");
-    exit();
-}
+
 if (isset($_POST['tambah_kepsek'])) {
     $nip  = mysqli_real_escape_string($conn, $_POST['nip']);
     $nama = mysqli_real_escape_string($conn, $_POST['nama_kepsek']);
@@ -59,6 +54,25 @@ if (isset($_POST['tambah_kepsek'])) {
     exit();
 }
 
+// Fitur Baru: Tambah Kelas
+if (isset($_POST['tambah_kelas'])) {
+    $nama_kelas = mysqli_real_escape_string($conn, $_POST['nama_kelas']);
+    mysqli_query($conn, "INSERT IGNORE INTO master_kelas (nama_kelas) VALUES ('$nama_kelas')");
+    header("Location: dashboard.php");
+    exit();
+}
+
+// Tambah Siswa (Sekarang terikat ke kelas tertentu)
+if (isset($_POST['tambah_siswa'])) {
+    $nisn  = mysqli_real_escape_string($conn, $_POST['nisn']);
+    $nama  = mysqli_real_escape_string($conn, $_POST['nama_siswa']);
+    $kelas = mysqli_real_escape_string($conn, $_POST['kelas']);
+    mysqli_query($conn, "INSERT INTO siswa (nisn, nama_siswa, kelas, password, status) VALUES ('$nisn', '$nama', '$kelas', '$pass_default_hash', 'Aktif')");
+    header("Location: dashboard.php");
+    exit();
+}
+
+// --- [AKSI EDIT & UPDATE] ---
 if (isset($_POST['edit_kepsek'])) {
     $nip_lama = mysqli_real_escape_string($conn, $_POST['nip_lama']);
     $nama     = mysqli_real_escape_string($conn, $_POST['nama_kepsek']);
@@ -90,7 +104,6 @@ if (isset($_POST['edit_siswa'])) {
     header("Location: dashboard.php");
     exit();
 }
-
 if (isset($_POST['kenaikan_massal'])) {
     $kelas_lama = mysqli_real_escape_string($conn, $_POST['kelas_lama']);
     $kelas_baru = mysqli_real_escape_string($conn, $_POST['kelas_baru']);
@@ -99,12 +112,15 @@ if (isset($_POST['kenaikan_massal'])) {
     if ($status_baru == 'Lulus') {
         mysqli_query($conn, "UPDATE siswa SET status='Lulus' WHERE kelas='$kelas_lama' AND status='Aktif'");
     } else {
+        // Otomatis bikin wadah kelas baru kalau belum ada
+        mysqli_query($conn, "INSERT IGNORE INTO master_kelas (nama_kelas) VALUES ('$kelas_baru')");
         mysqli_query($conn, "UPDATE siswa SET kelas='$kelas_baru' WHERE kelas='$kelas_lama' AND status='Aktif'");
     }
     echo "<script>alert('Update kelas massal berhasil!'); window.location='dashboard.php';</script>";
     exit();
 }
 
+// --- [AKSI SET STATUS] ---
 if (isset($_GET['nonaktif_admin'])) {
     $id = mysqli_real_escape_string($conn, $_GET['nonaktif_admin']);
     mysqli_query($conn, "UPDATE admin_tu SET status='Non-Aktif' WHERE nip='$id'");
@@ -181,11 +197,12 @@ $nama_tampil = $_SESSION['nama'] ?? ($dt_sa['nama_super_admin'] ?? 'Master Admin
             <ul class="nav nav-pills custom-pills mb-4" id="pills-tab" role="tablist">
                 <li class="nav-item" role="presentation"><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#tab-admin" type="button" role="tab">Admin TU</button></li>
                 <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-guru" type="button" role="tab">Guru</button></li>
-                <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-siswa" type="button" role="tab">Siswa</button></li>
+                <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-siswa" type="button" role="tab">Siswa & Kelas</button></li>
                 <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-kepsek" type="button" role="tab">Kepala Sekolah</button></li>
             </ul>
 
             <div class="tab-content" id="pills-tabContent">
+
                 <div class="tab-pane fade show active" id="tab-admin" role="tabpanel">
                     <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between mb-4 gap-3">
                         <h6 class="fw-bold m-0 text-navy" style="font-size: 1.1rem;">Data Petugas TU</h6>
@@ -274,35 +291,41 @@ $nama_tampil = $_SESSION['nama'] ?? ($dt_sa['nama_super_admin'] ?? 'Master Admin
 
                 <div class="tab-pane fade" id="tab-siswa" role="tabpanel">
                     <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between mb-4 gap-3">
-                        <h6 class="fw-bold m-0 text-navy" style="font-size: 1.1rem;">Data Siswa</h6>
+                        <h6 class="fw-bold m-0 text-navy" style="font-size: 1.1rem;">Manajemen Data Siswa</h6>
                         <div class="d-flex action-wrapper gap-2 ms-md-auto">
                             <button class="btn btn-warning fw-bold text-nowrap" data-bs-toggle="modal" data-bs-target="#kenaikanMassal">Kelola Kenaikan Kelas</button>
                             <input type="text" id="searchSiswa" class="form-control search-input" placeholder="Cari NISN / Nama..." style="min-width: 200px;">
-                            <button class="btn btn-action text-nowrap" data-bs-toggle="modal" data-bs-target="#addSiswa">+ Tambah Siswa</button>
+                            <button class="btn btn-action text-nowrap" data-bs-toggle="modal" data-bs-target="#addKelas">+ Tambah Kelas Baru</button>
                         </div>
                     </div>
+
                     <div class="accordion" id="accordionSiswa">
                         <?php
-                        $q_siswa = mysqli_query($conn, "SELECT * FROM siswa ORDER BY kelas, nama_siswa");
-                        $data_siswa = [];
+                        $q_master_kelas = mysqli_query($conn, "SELECT nama_kelas FROM master_kelas ORDER BY nama_kelas ASC");
                         $list_kelas_unik = [];
-                        while ($row = mysqli_fetch_assoc($q_siswa)) {
-                            $kls = $row['kelas'] ?: 'Tanpa Kelas';
-                            $data_siswa[$kls][] = $row;
-                            if (!in_array($kls, $list_kelas_unik) && $kls != 'Tanpa Kelas') $list_kelas_unik[] = $kls;
-                        }
-                        foreach ($data_siswa as $kelas => $siswas) {
+
+                        while ($row_kelas = mysqli_fetch_assoc($q_master_kelas)) {
+                            $kelas = $row_kelas['nama_kelas'];
+                            $list_kelas_unik[] = $kelas;
                             $md5_kelas = md5($kelas);
+
+                            // Hitung jumlah siswa di kelas ini
+                            $q_hitung = mysqli_query($conn, "SELECT COUNT(*) as jml FROM siswa WHERE kelas='$kelas'");
+                            $jml_siswa = mysqli_fetch_assoc($q_hitung)['jml'];
                         ?>
                             <div class="accordion-item mb-3 border-0 shadow-sm rounded student-accordion-item">
                                 <h2 class="accordion-header" id="heading<?php echo $md5_kelas; ?>">
                                     <button class="accordion-button collapsed fw-bold rounded" type="button" data-bs-toggle="collapse" data-bs-target="#collapse<?php echo $md5_kelas; ?>">
                                         Kelas <?php echo htmlspecialchars($kelas); ?>
-                                        <span class="badge bg-navy ms-3 px-2 rounded-pill"><?php echo count($siswas); ?> Siswa</span>
+                                        <span class="badge bg-navy ms-3 px-2 rounded-pill"><?php echo $jml_siswa; ?> Siswa</span>
                                     </button>
                                 </h2>
                                 <div id="collapse<?php echo $md5_kelas; ?>" class="accordion-collapse collapse" data-bs-parent="#accordionSiswa">
-                                    <div class="accordion-body p-0">
+                                    <div class="accordion-body p-3">
+                                        <button class="btn btn-sm btn-outline-primary mb-3 fw-bold px-3 rounded-pill" onclick="bukaModalTambahSiswa('<?php echo htmlspecialchars($kelas); ?>')">
+                                            + Tambah Siswa ke Kelas <?php echo htmlspecialchars($kelas); ?>
+                                        </button>
+
                                         <div class="table-responsive">
                                             <table class="table table-hover text-center align-middle custom-table mb-0 student-table">
                                                 <thead>
@@ -313,30 +336,38 @@ $nama_tampil = $_SESSION['nama'] ?? ($dt_sa['nama_super_admin'] ?? 'Master Admin
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    <?php foreach ($siswas as $r) {
-                                                        $badge_color = 'bg-secondary';
-                                                        if ($r['status'] == 'Lulus') $badge_color = 'bg-success';
-                                                        if ($r['status'] == 'Pindah' || $r['status'] == 'Keluar') $badge_color = 'bg-danger';
-                                                        $status_badge = ($r['status'] != 'Aktif') ? "<span class='badge $badge_color ms-2'>" . $r['status'] . "</span>" : "";
+                                                    <?php
+                                                    $q_siswa_kelas = mysqli_query($conn, "SELECT * FROM siswa WHERE kelas='$kelas' ORDER BY nama_siswa ASC");
+                                                    if (mysqli_num_rows($q_siswa_kelas) > 0) {
+                                                        while ($r = mysqli_fetch_assoc($q_siswa_kelas)) {
+                                                            $badge_color = 'bg-secondary';
+                                                            if ($r['status'] == 'Lulus') $badge_color = 'bg-success';
+                                                            if ($r['status'] == 'Pindah' || $r['status'] == 'Keluar') $badge_color = 'bg-danger';
+                                                            $status_badge = ($r['status'] != 'Aktif') ? "<span class='badge $badge_color ms-2'>" . $r['status'] . "</span>" : "";
                                                     ?>
-                                                        <tr class="student-row">
-                                                            <td class="student-nisn"><span class='badge bg-light text-dark border'><?php echo $r['nisn']; ?></span></td>
-                                                            <td class='fw-medium text-start ps-4 student-name'><?php echo $r['nama_siswa'] . $status_badge; ?></td>
-                                                            <td class="col-aksi">
-                                                                <button class='btn btn-outline-primary btn-sm rounded-pill px-3' data-bs-toggle='modal' data-bs-target='#editSiswa<?php echo $r['nisn']; ?>'>Edit</button>
-                                                                <?php if ($r['status'] == 'Aktif') { ?>
-                                                                    <div class="btn-group">
-                                                                        <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-3 dropdown-toggle" data-bs-toggle="dropdown">Non-Aktifkan</button>
-                                                                        <ul class="dropdown-menu">
-                                                                            <li><a class="dropdown-item" href="?nonaktif_siswa=<?php echo $r['nisn']; ?>&status=Lulus" onclick='return confirm("Set status Lulus?")'>Lulus</a></li>
-                                                                            <li><a class="dropdown-item" href="?nonaktif_siswa=<?php echo $r['nisn']; ?>&status=Pindah" onclick='return confirm("Set status Pindah Sekolah?")'>Pindah</a></li>
-                                                                            <li><a class="dropdown-item" href="?nonaktif_siswa=<?php echo $r['nisn']; ?>&status=Keluar" onclick='return confirm("Set status Dikeluarkan?")'>Keluar</a></li>
-                                                                        </ul>
-                                                                    </div>
-                                                                <?php } ?>
-                                                            </td>
-                                                        </tr>
-                                                    <?php } ?>
+                                                            <tr class="student-row">
+                                                                <td class="student-nisn"><span class='badge bg-light text-dark border'><?php echo $r['nisn']; ?></span></td>
+                                                                <td class='fw-medium text-start ps-4 student-name'><?php echo $r['nama_siswa'] . $status_badge; ?></td>
+                                                                <td class="col-aksi">
+                                                                    <button class='btn btn-outline-primary btn-sm rounded-pill px-3' data-bs-toggle='modal' data-bs-target='#editSiswa<?php echo $r['nisn']; ?>'>Edit</button>
+                                                                    <?php if ($r['status'] == 'Aktif') { ?>
+                                                                        <div class="btn-group">
+                                                                            <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-3 dropdown-toggle" data-bs-toggle="dropdown">Non-Aktifkan</button>
+                                                                            <ul class="dropdown-menu">
+                                                                                <li><a class="dropdown-item" href="?nonaktif_siswa=<?php echo $r['nisn']; ?>&status=Lulus" onclick='return confirm("Set status Lulus?")'>Lulus</a></li>
+                                                                                <li><a class="dropdown-item" href="?nonaktif_siswa=<?php echo $r['nisn']; ?>&status=Pindah" onclick='return confirm("Set status Pindah Sekolah?")'>Pindah</a></li>
+                                                                                <li><a class="dropdown-item" href="?nonaktif_siswa=<?php echo $r['nisn']; ?>&status=Keluar" onclick='return confirm("Set status Dikeluarkan?")'>Keluar</a></li>
+                                                                            </ul>
+                                                                        </div>
+                                                                    <?php } ?>
+                                                                </td>
+                                                            </tr>
+                                                    <?php
+                                                        }
+                                                    } else {
+                                                        echo "<tr><td colspan='3' class='text-muted py-3'>Belum ada siswa di kelas ini.</td></tr>";
+                                                    }
+                                                    ?>
                                                 </tbody>
                                             </table>
                                         </div>
@@ -416,7 +447,7 @@ $nama_tampil = $_SESSION['nama'] ?? ($dt_sa['nama_super_admin'] ?? 'Master Admin
                         </select>
                     </div>
                     <div class="mb-2" id="inputKelasBaru">
-                        <label class="form-label fw-bold">Nama Kelas Baru</label>
+                        <label class="form-label fw-bold">Ketik Nama Kelas Baru</label>
                         <input type="text" name="kelas_baru" class="form-control" placeholder="Contoh: XI IPA 1">
                     </div>
                 </div>
@@ -475,23 +506,6 @@ $nama_tampil = $_SESSION['nama'] ?? ($dt_sa['nama_super_admin'] ?? 'Master Admin
         </div>
     </div>
 
-    <div class="modal fade" id="addSiswa" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <form method="POST" class="modal-content custom-modal">
-                <div class="modal-header">
-                    <h5 class="modal-title fw-bold">Tambah Siswa</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3"><label class="form-label">NISN</label><input type="text" name="nisn" class="form-control" required></div>
-                    <div class="mb-3"><label class="form-label">Nama Lengkap</label><input type="text" name="nama_siswa" class="form-control" required></div>
-                    <div class="mb-2"><label class="form-label">Kelas</label><input type="text" name="kelas" class="form-control" required></div>
-                    <div class="form-text text-danger mt-3 small">*Password default akun baru otomatis di-hash dari: <b>123</b></div>
-                </div>
-                <div class="modal-footer border-0 pt-0"><button type="submit" name="tambah_siswa" class="btn btn-action w-100">Simpan</button></div>
-            </form>
-        </div>
-    </div>
-
     <div class="modal fade" id="addKepsek" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <form method="POST" class="modal-content custom-modal">
@@ -506,6 +520,43 @@ $nama_tampil = $_SESSION['nama'] ?? ($dt_sa['nama_super_admin'] ?? 'Master Admin
                     <div class="form-text text-danger mt-3 small">*Password default akun baru otomatis di-hash dari: <b>123</b></div>
                 </div>
                 <div class="modal-footer border-0 pt-0"><button type="submit" name="tambah_kepsek" class="btn btn-action w-100">Simpan Kepsek Baru</button></div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal fade" id="addKelas" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <form method="POST" class="modal-content custom-modal">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Tambah Wadah Kelas Baru</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-2">
+                        <label class="form-label">Nama Kelas</label>
+                        <input type="text" name="nama_kelas" class="form-control" placeholder="Contoh: X IPA 2" required>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0"><button type="submit" name="tambah_kelas" class="btn btn-action w-100">Simpan Kelas</button></div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal fade" id="addSiswaModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <form method="POST" class="modal-content custom-modal">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Tambah Siswa Baru</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label text-navy fw-bold">Dimasukkan ke Kelas:</label>
+                        <input type="text" name="kelas" id="inputModalKelas" class="form-control bg-light" readonly required>
+                    </div>
+                    <div class="mb-3"><label class="form-label">NISN</label><input type="text" name="nisn" class="form-control" required></div>
+                    <div class="mb-2"><label class="form-label">Nama Lengkap Siswa</label><input type="text" name="nama_siswa" class="form-control" required></div>
+                    <div class="form-text text-danger mt-3 small">*Password default akun baru otomatis di-hash dari: <b>123</b></div>
+                </div>
+                <div class="modal-footer border-0 pt-0"><button type="submit" name="tambah_siswa" class="btn btn-action w-100">Simpan Siswa</button></div>
             </form>
         </div>
     </div>
@@ -560,7 +611,15 @@ $nama_tampil = $_SESSION['nama'] ?? ($dt_sa['nama_super_admin'] ?? 'Master Admin
                         <input type="hidden" name="nisn_lama" value="<?php echo $r['nisn']; ?>">
                         <div class="mb-3"><label class="form-label">NISN</label><input type="text" class="form-control bg-light" value="<?php echo $r['nisn']; ?>" readonly></div>
                         <div class="mb-3"><label class="form-label">Nama Lengkap</label><input type="text" name="nama_siswa" class="form-control" value="<?php echo $r['nama_siswa']; ?>" required></div>
-                        <div class="mb-2"><label class="form-label">Kelas</label><input type="text" name="kelas" class="form-control" value="<?php echo $r['kelas']; ?>" required></div>
+                        <div class="mb-2">
+                            <label class="form-label">Kelas</label>
+                            <select name="kelas" class="form-select" required>
+                                <?php foreach ($list_kelas_unik as $lk) {
+                                    $selected = ($lk == $r['kelas']) ? 'selected' : '';
+                                    echo "<option value='$lk' $selected>$lk</option>";
+                                } ?>
+                            </select>
+                        </div>
                     </div>
                     <div class="modal-footer border-0 pt-0"><button type="submit" name="edit_siswa" class="btn btn-action w-100">Simpan Perubahan</button></div>
                 </form>
@@ -594,6 +653,16 @@ $nama_tampil = $_SESSION['nama'] ?? ($dt_sa['nama_super_admin'] ?? 'Master Admin
     <script src="../../assets/js/remember-tab.js"></script>
 
     <script>
+        // SCRIPT BARU UNTUK MEMBUKA MODAL TAMBAH SISWA SESUAI KELASNYA
+        function bukaModalTambahSiswa(namaKelas) {
+            // Isi form input kelas yang readonly dengan nama kelas dari parameter
+            document.getElementById('inputModalKelas').value = namaKelas;
+            // Panggil modal pakai Javascript Bootstrap
+            var modalSiswa = new bootstrap.Modal(document.getElementById('addSiswaModal'));
+            modalSiswa.show();
+        }
+
+        // Script Sisanya Tetap Sama
         function toggleKelasBaru() {
             var aksi = document.getElementById('aksiKelasMassal').value;
             var inputDiv = document.getElementById('inputKelasBaru');

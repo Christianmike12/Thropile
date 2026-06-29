@@ -4,7 +4,7 @@ require '../../koneksi.php';
 /** @var mysqli $conn */
 
 if (!isset($_SESSION['role']) || $_SESSION['role'] != "Siswa") {
-    header("Location: ../../index.php");
+    header("Location: ../../login.php");
     exit();
 }
 
@@ -221,7 +221,7 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'riwayat';
                                 $data_galeri_array[$g['id_prestasi']] = $g;
 
                                 $images = [];
-                                if (!empty($g['foto_penyerahan'])) $images[] = $g['foto_penyerahan'];
+                                if (!empty($g['file_trofi'])) $images[] = $g['file_trofi'];
                                 if (!empty($g['file_sertifikat'])) $images[] = $g['file_sertifikat'];
                                 if (empty($images)) $images[] = 'logo.png';
 
@@ -277,7 +277,7 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'riwayat';
 
     foreach ($semua_modal_siswa as $rk) {
         $images_modal = [];
-        if (!empty($rk['foto_penyerahan'])) $images_modal[] = $rk['foto_penyerahan'];
+        if (!empty($rk['file_trofi'])) $images_modal[] = $rk['file_trofi'];
         if (!empty($rk['file_sertifikat'])) $images_modal[] = $rk['file_sertifikat'];
         if (empty($images_modal)) $images_modal[] = 'logo.png';
     ?>

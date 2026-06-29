@@ -112,7 +112,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         exit();
     } else {
         $_SESSION['error_login'] = "ID Pengguna atau Kata Sandi salah / Akun Non-Aktif!";
-        header("Location: index.php");
+        header("Location: login.php");
         exit();
     }
 }

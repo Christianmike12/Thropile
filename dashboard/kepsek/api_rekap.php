@@ -80,7 +80,7 @@ if ($q_data && mysqli_num_rows($q_data) > 0) {
         </tr>";
 
         $images = [];
-        if (!empty($r['foto_penyerahan'])) $images[] = $r['foto_penyerahan'];
+        if (!empty($r['file_trofi'])) $images[] = $r['file_trofi'];
         if (!empty($r['file_sertifikat'])) $images[] = $r['file_sertifikat'];
         if (empty($images)) $images[] = 'logo.png';
 

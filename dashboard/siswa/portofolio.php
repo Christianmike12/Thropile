@@ -4,7 +4,7 @@ require '../../koneksi.php';
 /** @var mysqli $conn */
 
 if (!isset($_SESSION['role']) || $_SESSION['role'] != "Siswa") {
-    header("Location: ../../index.php");
+    header("Location: ../../login.php");
     exit();
 }
 

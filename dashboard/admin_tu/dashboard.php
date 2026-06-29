@@ -4,7 +4,7 @@ require '../../koneksi.php';
 /** @var mysqli $conn */
 
 if (!isset($_SESSION['role']) || $_SESSION['role'] != "Admin TU") {
-    header("Location: ../../index.php");
+    header("Location: ../../login.php");
     exit();
 }
 
@@ -158,7 +158,7 @@ $nama_tampil = $_SESSION['nama'] ?? 'Petugas TU';
                                     <button type="button" onclick="loadDataRekap()" class="btn btn-warning fw-bold px-3">Terapkan Filter</button>
                                 </div>
                                 <div class="ms-auto d-flex gap-2">
-                                    <button type="button" onclick="bukaCetakRekap()" class="btn btn-primary fw-bold px-4 text-nowrap" style="background-color: #002b5c; border-color: #002b5c;">🖨️ Cetak Rekapitulasi</button>
+                                    <button type="button" onclick="bukaCetakRekap()" class="btn btn-primary fw-bold px-4 text-nowrap" style="background-color: #002b5c; border-color: #002b5c;">Cetak Rekapitulasi</button>
                                 </div>
                             </div>
                         </form>

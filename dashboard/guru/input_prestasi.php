@@ -4,12 +4,13 @@ require '../../koneksi.php';
 /** @var mysqli $conn */
 
 if (!isset($_SESSION['role']) || $_SESSION['role'] != "Guru") {
-    header("Location: ../../index.php");
+    header("Location: ../../login.php");
     exit();
 }
 
 $nip_guru = $_SESSION['nip'];
 
+// --- [AKSI EDIT PROFIL] ---
 if (isset($_POST['edit_profil_guru'])) {
     $nip_guru_edit  = $_POST['nip_guru'];
     $nama_guru = $_POST['nama_guru'];
@@ -24,6 +25,7 @@ if (isset($_POST['edit_profil_guru'])) {
 
 $pesan = "";
 
+// --- [AKSI INPUT PRESTASI] ---
 if ($_SERVER["REQUEST_METHOD"] == "POST" && !isset($_POST['edit_profil_guru'])) {
 
     if (empty($_POST) && isset($_SERVER['CONTENT_LENGTH']) && $_SERVER['CONTENT_LENGTH'] > 0) {
@@ -40,15 +42,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && !isset($_POST['edit_profil_guru'])) 
         $peringkat = (isset($_POST['peringkat']) && $_POST['peringkat'] == "Lainnya") ? mysqli_real_escape_string($conn, $_POST['peringkat_lainnya']) : mysqli_real_escape_string($conn, $_POST['peringkat']);
 
         $allowed_ext = ['pdf', 'jpg', 'jpeg', 'png'];
+
+        // Data File Sertifikat
         $nama_asli_sertif  = $_FILES['sertifikat']['name'];
         $tmp_file_sertif   = $_FILES['sertifikat']['tmp_name'];
         $ukuran_sertif     = $_FILES['sertifikat']['size'];
         $error_sertif      = $_FILES['sertifikat']['error'];
 
-        $nama_asli_foto  = $_FILES['foto_penyerahan']['name'];
-        $tmp_file_foto   = $_FILES['foto_penyerahan']['tmp_name'];
-        $ukuran_foto     = $_FILES['foto_penyerahan']['size'];
-        $error_foto      = $_FILES['foto_penyerahan']['error'];
+        // Data File Foto Trofi
+        $nama_asli_foto  = $_FILES['file_trofi']['name'];
+        $tmp_file_foto   = $_FILES['file_trofi']['tmp_name'];
+        $ukuran_foto     = $_FILES['file_trofi']['size'];
+        $error_foto      = $_FILES['file_trofi']['error'];
 
         if ($error_sertif == 4) {
             $pesan = "<div class='alert alert-danger fw-medium'>Pilih file sertifikat/piagam terlebih dahulu!</div>";
@@ -60,9 +65,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && !isset($_POST['edit_profil_guru'])) 
             } elseif ($ukuran_sertif > 5 * 1024 * 1024) {
                 $pesan = "<div class='alert alert-danger fw-medium'>Ukuran file Sertifikat maksimal 5MB!</div>";
             } else {
+                // Upload Sertifikat
                 $nama_file_sertif = time() . '_sertif_' . preg_replace("/[^a-zA-Z0-9]/", "", $nisn) . '.' . $ext_sertif;
                 move_uploaded_file($tmp_file_sertif, "../../assets/uploads/" . $nama_file_sertif);
 
+                // Upload Foto (Opsional)
                 $nama_file_foto = "";
                 if ($error_foto == 0) {
                     $ext_foto = strtolower(pathinfo($nama_asli_foto, PATHINFO_EXTENSION));
@@ -72,9 +79,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && !isset($_POST['edit_profil_guru'])) 
                     }
                 }
 
+                // Simpan ke Database
                 $query = "INSERT INTO prestasi (
                             nisn, nip_guru, nama_lomba, kategori, tingkat, peringkat, 
-                            tahun, tanggal_pelaksanaan, file_sertifikat, foto_penyerahan, status_data
+                            tahun, tanggal_pelaksanaan, file_sertifikat, file_trofi, status_data
                           ) VALUES (
                             '$nisn', '$nip_guru', '$nama_lomba', '$kategori', '$tingkat', '$peringkat', 
                             '$tahun', '$tanggal_pelaksanaan', '$nama_file_sertif', '$nama_file_foto', '$status_data'
@@ -91,9 +99,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && !isset($_POST['edit_profil_guru'])) 
     }
 }
 
+// Mengambil Data Profil Guru
 $q_profil = mysqli_query($conn, "SELECT * FROM guru WHERE nip='$nip_guru'");
 $dt_profil = mysqli_fetch_assoc($q_profil);
 
+// Mengambil Data Siswa yang dikelompokkan berdasarkan Kelas
 $q_all_siswa = mysqli_query($conn, "SELECT nisn, nama_siswa, kelas FROM siswa ORDER BY nama_siswa ASC");
 $data_all_siswa = [];
 while ($row = mysqli_fetch_assoc($q_all_siswa)) {
@@ -101,6 +111,7 @@ while ($row = mysqli_fetch_assoc($q_all_siswa)) {
 }
 $json_siswa = json_encode($data_all_siswa);
 ?>
+
 <!DOCTYPE html>
 <html lang="id">
 
@@ -122,7 +133,7 @@ $json_siswa = json_encode($data_all_siswa);
             </div>
             <div class="dropdown">
                 <a href="javascript:void(0)" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" style="border: 1px solid rgba(255,255,255,0.3); padding: 6px 15px; border-radius: 8px;">
-                    <span class="me-2 fw-medium d-none d-md-block">Halo, <?php echo $_SESSION['nama']; ?></span>
+                    <span class="me-2 fw-medium d-none d-md-block">Halo, <?php echo htmlspecialchars($_SESSION['nama']); ?></span>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="border-radius: 12px; border:none; margin-top:10px;">
                     <li>
@@ -148,15 +159,17 @@ $json_siswa = json_encode($data_all_siswa);
             <?php echo $pesan; ?>
 
             <form action="" method="POST" enctype="multipart/form-data">
+
                 <div class="row">
                     <div class="col-md-5 mb-4">
                         <label class="form-label">Pilih Kelas</label>
                         <select id="pilihKelas" class="form-select bg-light" required>
                             <option value="">-- Pilih Kelas --</option>
                             <?php
-                            $q_kelas = mysqli_query($conn, "SELECT DISTINCT kelas FROM siswa ORDER BY kelas ASC");
+                            // Mengambil daftar semua kelas (termasuk kelas kosong buatan Super Admin)
+                            $q_kelas = mysqli_query($conn, "SELECT nama_kelas FROM master_kelas ORDER BY nama_kelas ASC");
                             while ($k = mysqli_fetch_assoc($q_kelas)) {
-                                $kelas_val = htmlspecialchars($k['kelas']);
+                                $kelas_val = htmlspecialchars($k['nama_kelas']);
                                 echo "<option value='$kelas_val'>Kelas $kelas_val</option>";
                             }
                             ?>
@@ -228,7 +241,7 @@ $json_siswa = json_encode($data_all_siswa);
                     <div class="col-md-6 mb-3">
                         <div class="p-3 bg-light rounded border border-secondary border-opacity-25 h-100">
                             <label class="form-label text-dark">Foto Penyerahan Piala (Opsional)</label>
-                            <input type="file" name="foto_penyerahan" class="form-control bg-white" accept=".jpg,.jpeg,.png">
+                            <input type="file" name="file_trofi" class="form-control bg-white" accept=".jpg,.jpeg,.png">
                             <div class="form-text small">Disarankan untuk masuk di Galeri Sekolah. Format: JPG, PNG (Max 5MB)</div>
                         </div>
                     </div>
@@ -255,7 +268,7 @@ $json_siswa = json_encode($data_all_siswa);
                     </div>
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-navy">Nama Lengkap & Gelar</label>
-                        <input type="text" name="nama_guru" class="form-control" value="<?php echo $dt_profil['nama_guru'] ?? ''; ?>" required>
+                        <input type="text" name="nama_guru" class="form-control" value="<?php echo htmlspecialchars($dt_profil['nama_guru'] ?? ''); ?>" required>
                     </div>
                     <div class="mb-2">
                         <label class="form-label small fw-bold text-navy">Password Akun</label>
@@ -271,7 +284,9 @@ $json_siswa = json_encode($data_all_siswa);
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="../../assets/js/remember-tab.js"></script>
+
     <script>
+        // Logika Dropdown Kelas Dinamis
         const dataSiswa = <?php echo $json_siswa; ?>;
         const selectKelas = document.getElementById('pilihKelas');
         const selectSiswa = document.getElementById('pilihSiswa');
@@ -280,20 +295,28 @@ $json_siswa = json_encode($data_all_siswa);
             const kelasTerpilih = this.value;
             selectSiswa.innerHTML = '<option value="">-- Silakan Pilih Siswa --</option>';
 
-            if (kelasTerpilih && dataSiswa[kelasTerpilih]) {
-                selectSiswa.disabled = false;
-                dataSiswa[kelasTerpilih].forEach(function(siswa) {
-                    const option = document.createElement('option');
-                    option.value = siswa.nisn;
-                    option.textContent = siswa.nama + " (" + siswa.nisn + ")";
-                    selectSiswa.appendChild(option);
-                });
+            if (kelasTerpilih) {
+                if (dataSiswa[kelasTerpilih]) {
+                    // Jika ada siswa di kelas tersebut
+                    selectSiswa.disabled = false;
+                    dataSiswa[kelasTerpilih].forEach(function(siswa) {
+                        const option = document.createElement('option');
+                        option.value = siswa.nisn;
+                        option.textContent = siswa.nama + " (" + siswa.nisn + ")";
+                        selectSiswa.appendChild(option);
+                    });
+                } else {
+                    // Jika kelas kosong (baru dibuat Super Admin)
+                    selectSiswa.disabled = true;
+                    selectSiswa.innerHTML = '<option value="">-- Belum ada siswa di kelas ini --</option>';
+                }
             } else {
                 selectSiswa.disabled = true;
                 selectSiswa.innerHTML = '<option value="">-- Silakan Pilih Kelas Dulu --</option>';
             }
         });
 
+        // Tampilkan Form Input Tambahan untuk Kategori "Lainnya"
         function checkKategori(val) {
             const inputKategori = document.getElementById('kategoriLainnyaInput');
             if (val === 'Lainnya') {
@@ -305,6 +328,7 @@ $json_siswa = json_encode($data_all_siswa);
             }
         }
 
+        // Tampilkan Form Input Tambahan untuk Peringkat "Lainnya"
         function checkPeringkat(val) {
             const inputPeringkat = document.getElementById('peringkatLainnyaInput');
             if (val === 'Lainnya') {

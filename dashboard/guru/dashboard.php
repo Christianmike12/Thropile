@@ -4,7 +4,7 @@ require '../../koneksi.php';
 /** @var mysqli $conn */
 
 if (!isset($_SESSION['role']) || $_SESSION['role'] != "Guru") {
-    header("Location: ../../index.php");
+    header("Location: ../../login.php");
     exit();
 }
 
@@ -25,15 +25,15 @@ if (isset($_POST['edit_profil_guru'])) {
 if (isset($_GET['hapus_prestasi'])) {
     $id_hapus = (int)$_GET['hapus_prestasi'];
 
-    $q_file = mysqli_query($conn, "SELECT file_sertifikat, foto_penyerahan FROM prestasi WHERE id_prestasi=$id_hapus AND nip_guru='$nip_guru'");
+    $q_file = mysqli_query($conn, "SELECT file_sertifikat, file_trofi FROM prestasi WHERE id_prestasi=$id_hapus AND nip_guru='$nip_guru'");
     if (mysqli_num_rows($q_file) > 0) {
         $dt_file = mysqli_fetch_assoc($q_file);
 
         $path_sertif = "../../assets/uploads/" . $dt_file['file_sertifikat'];
         if (!empty($dt_file['file_sertifikat']) && file_exists($path_sertif)) unlink($path_sertif);
 
-        $path_foto = "../../assets/uploads/" . $dt_file['foto_penyerahan'];
-        if (!empty($dt_file['foto_penyerahan']) && file_exists($path_foto)) unlink($path_foto);
+        $path_foto = "../../assets/uploads/" . $dt_file['file_trofi'];
+        if (!empty($dt_file['file_trofi']) && file_exists($path_foto)) unlink($path_foto);
 
         mysqli_query($conn, "DELETE FROM prestasi WHERE id_prestasi=$id_hapus");
         echo "<script>alert('Data prestasi berhasil dihapus!'); window.location='dashboard.php';</script>";
@@ -47,12 +47,12 @@ if (isset($_POST['edit_prestasi_guru'])) {
     $tingkat = mysqli_real_escape_string($conn, $_POST['tingkat']);
     $peringkat = mysqli_real_escape_string($conn, $_POST['peringkat']);
 
-    $q_lama = mysqli_query($conn, "SELECT file_sertifikat, foto_penyerahan, nisn FROM prestasi WHERE id_prestasi=$id_p");
+    $q_lama = mysqli_query($conn, "SELECT file_sertifikat, file_trofi, nisn FROM prestasi WHERE id_prestasi=$id_p");
     $dt_lama = mysqli_fetch_assoc($q_lama);
     $nisn = $dt_lama['nisn'];
 
     $nama_file_sertif = $dt_lama['file_sertifikat'];
-    $nama_file_foto = $dt_lama['foto_penyerahan'];
+    $nama_file_foto = $dt_lama['file_trofi'];
 
     if (!empty($_FILES['sertifikat_baru']['name'])) {
         $ext = strtolower(pathinfo($_FILES['sertifikat_baru']['name'], PATHINFO_EXTENSION));
@@ -72,7 +72,7 @@ if (isset($_POST['edit_prestasi_guru'])) {
         }
     }
 
-    mysqli_query($conn, "UPDATE prestasi SET nama_lomba='$nama_lomba', tingkat='$tingkat', peringkat='$peringkat', file_sertifikat='$nama_file_sertif', foto_penyerahan='$nama_file_foto', status_data='Pending', alasan_tolak=NULL WHERE id_prestasi='$id_p'");
+    mysqli_query($conn, "UPDATE prestasi SET nama_lomba='$nama_lomba', tingkat='$tingkat', peringkat='$peringkat', file_sertifikat='$nama_file_sertif', file_trofi='$nama_file_foto', status_data='Pending', alasan_tolak=NULL WHERE id_prestasi='$id_p'");
 
     echo "<script>alert('Data prestasi berhasil direvisi dan diajukan ulang!'); window.location='dashboard.php';</script>";
     exit();
@@ -169,11 +169,11 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'data';
                     <li>
                         <h6 class="dropdown-header text-muted">Akses Guru Pembina</h6>
                     </li>
-                    <li><a class="dropdown-item fw-medium" href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#editProfilGuru">⚙️ Pengaturan Akun</a></li>
+                    <li><a class="dropdown-item fw-medium" href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#editProfilGuru">Pengaturan Akun</a></li>
                     <li>
                         <hr class="dropdown-divider">
                     </li>
-                    <li><a class="dropdown-item text-danger fw-bold" href="../../logout.php">🚪 Keluar</a></li>
+                    <li><a class="dropdown-item text-danger fw-bold" href="../../logout.php">Keluar</a></li>
                 </ul>
             </div>
         </div>
@@ -336,7 +336,7 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'data';
                                 $data_galeri_array[$g['id_prestasi']] = $g;
 
                                 $images = [];
-                                if (!empty($g['foto_penyerahan'])) $images[] = $g['foto_penyerahan'];
+                                if (!empty($g['file_trofi'])) $images[] = $g['file_trofi'];
                                 if (!empty($g['file_sertifikat'])) $images[] = $g['file_sertifikat'];
                                 if (empty($images)) $images[] = 'logo.png';
 
@@ -355,12 +355,12 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'data';
                                                     </div>
                                                 <?php } ?>
                                             </div>
-                                            <div class="galeri-badge-top">🏆 <?php echo htmlspecialchars($g['kategori'] ?? '-'); ?></div>
+                                            <div class="galeri-badge-top"> <?php echo htmlspecialchars($g['kategori'] ?? '-'); ?></div>
                                         </div>
 
                                         <div class="galeri-body">
                                             <h5 class="galeri-title g-lomba"><?php echo htmlspecialchars($g['nama_lomba'] ?? '-'); ?></h5>
-                                            <div class="galeri-student g-nama">👨‍🎓 <?php echo htmlspecialchars($g['nama_siswa'] ?? '-'); ?> (Kelas <?php echo htmlspecialchars($g['kelas'] ?? '-'); ?>)</div>
+                                            <div class="galeri-student g-nama"> <?php echo htmlspecialchars($g['nama_siswa'] ?? '-'); ?> (Kelas <?php echo htmlspecialchars($g['kelas'] ?? '-'); ?>)</div>
                                             <div class="galeri-footer">
                                                 <div class="galeri-rank"><?php echo htmlspecialchars($g['peringkat'] ?? '-'); ?> - <?php echo htmlspecialchars($g['tingkat'] ?? '-'); ?></div>
                                                 <div class="galeri-date"><?php echo $tanggal_format; ?></div>
@@ -445,7 +445,7 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'data';
     <?php
     foreach ($data_galeri_array as $rk) {
         $images_modal = [];
-        if (!empty($rk['foto_penyerahan'])) $images_modal[] = $rk['foto_penyerahan'];
+        if (!empty($rk['file_trofi'])) $images_modal[] = $rk['file_trofi'];
         if (!empty($rk['file_sertifikat'])) $images_modal[] = $rk['file_sertifikat'];
         if (empty($images_modal)) $images_modal[] = 'logo.png';
     ?>
