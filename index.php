@@ -125,7 +125,7 @@ if($q_siswa && mysqli_num_rows($q_siswa) > 0) {
                     <div class="achievement-card">
                         <div class="card-image">
                             <!-- Foto Sertifikat / Dokumentasi Lomba -->
-                            <img src="assets/uploads/<?php echo htmlspecialchars($row['file_sertifikat']); ?>" alt="Dokumentasi <?php echo htmlspecialchars($row['nama_lomba']); ?>" onerror="this.src='https://via.placeholder.com/400x300?text=Dokumentasi+Lomba';">
+                            <img src="assets/uploads/<?php echo htmlspecialchars($row['file_sertifikat']); ?>" alt="Dokumentasi <?php echo htmlspecialchars($row['nama_lomba']); ?>" onerror="this.onerror=null; this.src='https://via.placeholder.com/400x300?text=Dokumentasi+Lomba';">
                             <div class="rank-badge">
                                 <i class="bi bi-trophy"></i> <?php echo htmlspecialchars($row['peringkat']); ?>
                             </div>
