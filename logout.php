@@ -11,5 +11,5 @@ if (isset($_COOKIE['user_role'])) {
     setcookie('user_role', '', time() - 3600, "/");
 }
 
-header("Location: login.php");
+header("Location: index.php");
 exit();
