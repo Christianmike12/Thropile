@@ -87,11 +87,11 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'riwayat';
                     <li>
                         <h6 class="dropdown-header text-muted">Akses Siswa</h6>
                     </li>
-                    <li><a class="dropdown-item fw-medium" href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#editProfilSiswa">⚙️ Pengaturan Akun</a></li>
+                    <li><a class="dropdown-item fw-medium" href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#editProfilSiswa">Pengaturan Akun</a></li>
                     <li>
                         <hr class="dropdown-divider">
                     </li>
-                    <li><a class="dropdown-item text-danger fw-bold" href="../../logout.php">🚪 Keluar</a></li>
+                    <li><a class="dropdown-item text-danger fw-bold" href="../../logout.php">Keluar</a></li>
                 </ul>
             </div>
         </div>
@@ -240,12 +240,12 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'riwayat';
                                                     </div>
                                                 <?php } ?>
                                             </div>
-                                            <div class="galeri-badge-top">🏆 <?php echo htmlspecialchars($g['kategori'] ?? '-'); ?></div>
+                                            <div class="galeri-badge-top"><?php echo htmlspecialchars($g['kategori'] ?? '-'); ?></div>
                                         </div>
 
                                         <div class="galeri-body">
                                             <h5 class="galeri-title g-lomba"><?php echo htmlspecialchars($g['nama_lomba'] ?? '-'); ?></h5>
-                                            <div class="galeri-student g-nama">👨‍🎓 <?php echo htmlspecialchars($g['nama_siswa'] ?? '-'); ?> (Kelas <?php echo htmlspecialchars($g['kelas'] ?? '-'); ?>)</div>
+                                            <div class="galeri-student g-nama"><?php echo htmlspecialchars($g['nama_siswa'] ?? '-'); ?> (Kelas <?php echo htmlspecialchars($g['kelas'] ?? '-'); ?>)</div>
                                             <div class="galeri-footer">
                                                 <div class="galeri-rank"><?php echo htmlspecialchars($g['peringkat'] ?? '-'); ?> - <?php echo htmlspecialchars($g['tingkat'] ?? '-'); ?></div>
                                                 <div class="galeri-date"><?php echo $tanggal_format; ?></div>

@@ -45,12 +45,12 @@ if ($ai_sekarang == 0 && $ai_lalu == 0) {
     $teks_ai = "Data belum mencukupi untuk analisis prediktif.";
 } elseif ($ai_sekarang > $ai_lalu) {
     $kenaikan = $ai_sekarang - $ai_lalu;
-    $teks_ai = "⚡ <b>Insight Cerdas:</b> Luar biasa! Terdapat tren <b>kenaikan $kenaikan prestasi</b> di bulan ini dibandingkan bulan lalu. Algoritma memprediksi semangat kompetitif siswa sedang tinggi.";
+    $teks_ai = "<b>Insight Cerdas:</b> Luar biasa! Terdapat tren <b>kenaikan $kenaikan prestasi</b> di bulan ini dibandingkan bulan lalu. Algoritma memprediksi semangat kompetitif siswa sedang tinggi.";
 } elseif ($ai_sekarang < $ai_lalu) {
     $penurunan = $ai_lalu - $ai_sekarang;
-    $teks_ai = "⚠️ <b>Insight Cerdas:</b> Perhatian. Terdapat <b>penurunan $penurunan prestasi</b> di bulan ini. Sistem menyarankan evaluasi peningkatan motivasi kompetisi siswa.";
+    $teks_ai = "<b>Insight Cerdas:</b> Perhatian. Terdapat <b>penurunan $penurunan prestasi</b> di bulan ini. Sistem menyarankan evaluasi peningkatan motivasi kompetisi siswa.";
 } else {
-    $teks_ai = "📊 <b>Insight Cerdas:</b> Performa stabil. Jumlah prestasi bulan ini sama dengan bulan lalu.";
+    $teks_ai = "<b>Insight Cerdas:</b> Performa stabil. Jumlah prestasi bulan ini sama dengan bulan lalu.";
 }
 
 $bulanIndo = [1 => "Januari", 2 => "Februari", 3 => "Maret", 4 => "April", 5 => "Mei", 6 => "Juni", 7 => "Juli", 8 => "Agustus", 9 => "September", 10 => "Oktober", 11 => "November", 12 => "Desember"];
@@ -92,11 +92,11 @@ $dt_profil_kepsek = mysqli_fetch_assoc($q_profil_kepsek);
                     <li>
                         <h6 class="dropdown-header text-muted">Akses Kepala Sekolah</h6>
                     </li>
-                    <li><a class="dropdown-item fw-medium" href="#" data-bs-toggle="modal" data-bs-target="#editProfilKepsek">⚙️ Pengaturan Akun</a></li>
+                    <li><a class="dropdown-item fw-medium" href="#" data-bs-toggle="modal" data-bs-target="#editProfilKepsek">Pengaturan Akun</a></li>
                     <li>
                         <hr class="dropdown-divider">
                     </li>
-                    <li><a class="dropdown-item text-danger fw-bold" href="../../logout.php">🚪 Keluar</a></li>
+                    <li><a class="dropdown-item text-danger fw-bold" href="../../logout.php">Keluar</a></li>
                 </ul>
             </div>
         </div>
@@ -118,7 +118,7 @@ $dt_profil_kepsek = mysqli_fetch_assoc($q_profil_kepsek);
                         <div class="ai-card" id="aiCard">
                             <div class="ai-header">
                                 <div style="display:flex;align-items:center;">
-                                    <span style="font-size:20px;margin-right:10px;">🤖</span>
+                                    <span style="font-size:20px;margin-right:10px;"></span>
                                     <h5 style="margin:0;font-weight:700;color:#002b5c;font-size:15px;">Trophile AI™ Insights</h5>
                                 </div>
                                 <span class="ai-indicator" id="aiIndicator">Klik untuk baca 📌</span>
@@ -192,7 +192,7 @@ $dt_profil_kepsek = mysqli_fetch_assoc($q_profil_kepsek);
 
                                 <div><button type="button" onclick="loadDataKepsek('rekap')" class="btn btn-warning fw-bold px-3">Terapkan Filter</button></div>
                                 <div class="ms-auto d-flex gap-2">
-                                    <button type="button" onclick="bukaCetakResmi('rekap')" class="btn btn-primary fw-bold px-4 text-nowrap" style="background-color: #002b5c; border-color: #002b5c;">🖨️ Cetak Resmi</button>
+                                    <button type="button" onclick="bukaCetakResmi('rekap')" class="btn btn-primary fw-bold px-4 text-nowrap" style="background-color: #002b5c; border-color: #002b5c;">Cetak Resmi</button>
                                 </div>
                             </div>
                         </form>

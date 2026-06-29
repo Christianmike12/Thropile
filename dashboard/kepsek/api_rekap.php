@@ -95,10 +95,10 @@ if ($q_data && mysqli_num_rows($q_data) > 0) {
                 <img src='../../assets/uploads/$enc_img' class='galeri-img d-block w-100' alt='Dokumentasi' onerror=\"this.onerror=null; this.src='../../assets/images/logo.png';\">
             </div>";
         }
-        $html_galeri .= "</div><div class='galeri-badge-top'>🏆 $kategori</div></div>
+        $html_galeri .= "</div><div class='galeri-badge-top'>$kategori</div></div>
                 <div class='galeri-body'>
                     <h5 class='galeri-title g-lomba'>$lomba</h5>
-                    <div class='galeri-student g-nama'>👨‍🎓 $nama (Kelas $kelas)</div>
+                    <div class='galeri-student g-nama'>$nama (Kelas $kelas)</div>
                     <div class='galeri-footer'>
                         <div class='galeri-rank'>$peringkat - $tingkat</div>
                         <div class='galeri-date'>$tgl</div>

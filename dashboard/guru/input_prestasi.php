@@ -139,11 +139,11 @@ $json_siswa = json_encode($data_all_siswa);
                     <li>
                         <h6 class="dropdown-header text-muted">Akses Guru Pembina</h6>
                     </li>
-                    <li><a class="dropdown-item fw-medium" href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#editProfilGuru">⚙️ Pengaturan Akun</a></li>
+                    <li><a class="dropdown-item fw-medium" href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#editProfilGuru">Pengaturan Akun</a></li>
                     <li>
                         <hr class="dropdown-divider">
                     </li>
-                    <li><a class="dropdown-item text-danger fw-bold" href="../../logout.php">🚪 Keluar</a></li>
+                    <li><a class="dropdown-item text-danger fw-bold" href="../../logout.php">Keluar</a></li>
                 </ul>
             </div>
         </div>
