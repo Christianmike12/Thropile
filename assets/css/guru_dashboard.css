@@ -116,7 +116,8 @@ body {
 .table-wrapper {
   border: 1px solid #e1e5eb;
   border-radius: 12px;
-  overflow: hidden;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .custom-table {

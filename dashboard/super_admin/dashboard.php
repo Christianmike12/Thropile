@@ -195,8 +195,8 @@ $nama_tampil = $_SESSION['nama'] ?? ($dt_sa['nama_super_admin'] ?? 'Master Admin
                 <a href="#" class="brand-logo d-none d-md-block">TROPHILE</a>
             </div>
             <div class="dropdown">
-                <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" style="border: 1px solid rgba(255,255,255,0.3); padding: 6px 15px; border-radius: 8px;">
-                    <span class="me-2 fw-medium">Halo, <?php echo $nama_tampil; ?></span>
+                <a href="javascript:void(0)" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" style="border: 1px solid rgba(255,255,255,0.3); padding: 6px 15px; border-radius: 8px;">
+                    <span class="me-2 fw-medium text-truncate d-inline-block" style="max-width: 150px; vertical-align: bottom;">Halo, <?php echo htmlspecialchars($nama_tampil); ?></span>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="border-radius: 12px; border:none; margin-top:10px;">
                     <li>

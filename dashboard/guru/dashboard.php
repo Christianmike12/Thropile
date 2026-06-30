@@ -186,13 +186,13 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'data';
 <body>
     <nav class="navbar-custom">
         <div class="nav-container">
-            <div class="brand-wrapper">
+            <div class="brand-wrapper d-flex align-items-center gap-2">
                 <img src="../../assets/images/logo.png" alt="Logo" width="35">
-                <a href="dashboard.php" class="brand-logo">TROPHILE</a>
+                <a href="dashboard.php" class="brand-logo d-none d-md-block">TROPHILE</a>
             </div>
             <div class="dropdown">
                 <a href="javascript:void(0)" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" style="border: 1px solid rgba(255,255,255,0.3); padding: 6px 15px; border-radius: 8px;">
-                    <span class="me-2 fw-medium d-none d-md-block">Halo, <?php echo $_SESSION['nama']; ?></span>
+                    <span class="me-2 fw-medium text-truncate d-inline-block" style="max-width: 150px; vertical-align: bottom;">Halo, <?php echo htmlspecialchars($_SESSION['nama']); ?></span>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="border-radius: 12px; border:none; margin-top:10px;">
                     <li>
