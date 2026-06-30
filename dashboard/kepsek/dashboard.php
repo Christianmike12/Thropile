@@ -9,10 +9,10 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != "Kepala Sekolah") {
 }
 
 if (isset($_POST['edit_profil_kepsek'])) {
-    $nip_kepsek  = $_POST['nip_kepsek'];
-    $nama_kepsek = $_POST['nama_kepsek'];
-    $user_kepsek = $_POST['user_kepsek'];
-    $pass_kepsek = $_POST['pass_kepsek'];
+    $nip_kepsek  = mysqli_real_escape_string($conn, $_POST['nip_kepsek']);
+    $nama_kepsek = mysqli_real_escape_string($conn, $_POST['nama_kepsek']);
+    $user_kepsek = mysqli_real_escape_string($conn, $_POST['user_kepsek']);
+    $pass_kepsek = trim($_POST['pass_kepsek']);
 
     if (!empty($pass_kepsek)) {
         if (strlen($pass_kepsek) < 8 || !preg_match("/[a-zA-Z]/", $pass_kepsek) || !preg_match("/\d/", $pass_kepsek)) {

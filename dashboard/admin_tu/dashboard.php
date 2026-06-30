@@ -9,10 +9,10 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != "Admin TU") {
 }
 
 if (isset($_POST['edit_profil_tu'])) {
-    $nip_tu  = $_POST['nip_tu'];
-    $nama_tu = $_POST['nama_tu'];
-    $user_tu = $_POST['user_tu'];
-    $pass_tu = $_POST['pass_tu'];
+    $nip_tu  = mysqli_real_escape_string($conn, $_POST['nip_tu']);
+    $nama_tu = mysqli_real_escape_string($conn, $_POST['nama_tu']);
+    $user_tu = mysqli_real_escape_string($conn, $_POST['user_tu']);
+    $pass_tu = trim($_POST['pass_tu']);
 
     if (!empty($pass_tu)) {
         if (strlen($pass_tu) < 8 || !preg_match("/[a-zA-Z]/", $pass_tu) || !preg_match("/\d/", $pass_tu)) {

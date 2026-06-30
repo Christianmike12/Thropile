@@ -9,9 +9,9 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != "Admin TU") {
 }
 
 $filter_mode = mysqli_real_escape_string($conn, $_POST['filter_mode'] ?? 'all');
-$tahun_filter = mysqli_real_escape_string($conn, $_POST['tahun'] ?? date('Y'));
-$bulan_filter = mysqli_real_escape_string($conn, $_POST['bulan'] ?? date('n'));
-$ta_awal_filter = mysqli_real_escape_string($conn, $_POST['ta_awal'] ?? date('Y'));
+$tahun_filter = (int)($_POST['tahun'] ?? date('Y'));
+$bulan_filter = (int)($_POST['bulan'] ?? date('n'));
+$ta_awal_filter = (int)($_POST['ta_awal'] ?? date('Y'));
 $tanggal_awal = mysqli_real_escape_string($conn, $_POST['tanggal_awal'] ?? date('Y-m-01'));
 $tanggal_akhir = mysqli_real_escape_string($conn, $_POST['tanggal_akhir'] ?? date('Y-m-t'));
 

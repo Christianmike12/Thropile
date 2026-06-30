@@ -11,9 +11,9 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != "Siswa") {
 $nisn_siswa = isset($_SESSION['nisn']) ? $_SESSION['nisn'] : (isset($_SESSION['username']) ? $_SESSION['username'] : '');
 
 if (isset($_POST['edit_profil_siswa'])) {
-    $nisn_edit  = $_POST['nisn_siswa'];
-    $nama_edit  = $_POST['nama_siswa'];
-    $pass_edit  = $_POST['pass_siswa'];
+    $nisn_edit  = mysqli_real_escape_string($conn, $_POST['nisn_siswa']);
+    $nama_edit  = mysqli_real_escape_string($conn, $_POST['nama_siswa']);
+    $pass_edit  = trim($_POST['pass_siswa']);
 
     if (!empty($pass_edit)) {
         if (strlen($pass_edit) < 8 || !preg_match("/[a-zA-Z]/", $pass_edit) || !preg_match("/\d/", $pass_edit)) {

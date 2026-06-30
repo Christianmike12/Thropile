@@ -12,9 +12,9 @@ $nip_guru = $_SESSION['nip'];
 
 // --- [AKSI EDIT PROFIL] ---
 if (isset($_POST['edit_profil_guru'])) {
-    $nip_guru_edit  = $_POST['nip_guru'];
-    $nama_guru = $_POST['nama_guru'];
-    $pass_guru = $_POST['pass_guru'];
+    $nip_guru_edit  = mysqli_real_escape_string($conn, $_POST['nip_guru']);
+    $nama_guru = mysqli_real_escape_string($conn, $_POST['nama_guru']);
+    $pass_guru = trim($_POST['pass_guru']);
 
     if (!empty($pass_guru)) {
         if (strlen($pass_guru) < 8 || !preg_match("/[a-zA-Z]/", $pass_guru) || !preg_match("/\d/", $pass_guru)) {
