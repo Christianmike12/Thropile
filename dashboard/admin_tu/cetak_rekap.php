@@ -64,6 +64,7 @@ $tanggal_cetak = date('d') . " " . $bulanIndo[date('n')] . " " . date('Y');
 <html lang="id">
 
 <head>
+    <link rel="icon" type="image/png" href="logo.png">
     <meta charset="UTF-8">
     <title>Cetak Rekap Prestasi - Trophile</title>
     <link rel="stylesheet" href="../../assets/css/cetak_rekap.css?v=<?php echo time(); ?>">

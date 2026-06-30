@@ -165,6 +165,7 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'data';
 <html lang="id">
 
 <head>
+    <link rel="icon" type="image/png" href="logo.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Guru Pembina - Trophile</title>

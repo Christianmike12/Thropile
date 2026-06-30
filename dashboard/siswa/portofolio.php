@@ -25,6 +25,7 @@ $tanggal_cetak = date('d') . " " . $bulanIndo[date('n') - 1] . " " . date('Y');
 <html lang="id">
 
 <head>
+    <link rel="icon" type="image/png" href="logo.png">
     <meta charset="UTF-8">
     <title>Portofolio - Trophile</title>
     <link rel="stylesheet" href="../../assets/css/siswa_portofolio.css?v=<?php echo time(); ?>">

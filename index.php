@@ -22,6 +22,7 @@ if($q_siswa && mysqli_num_rows($q_siswa) > 0) {
 <!DOCTYPE html>
 <html lang="id">
 <head>
+    <link rel="icon" type="image/png" href="logo.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistem Informasi Manajemen Trophile - Prestasi Siswa</title>

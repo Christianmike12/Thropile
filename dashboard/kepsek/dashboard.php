@@ -84,6 +84,7 @@ $dt_profil_kepsek = mysqli_fetch_assoc($q_profil_kepsek);
 <html lang="id">
 
 <head>
+    <link rel="icon" type="image/png" href="logo.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kepala Sekolah - Trophile</title>
