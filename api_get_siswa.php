@@ -1,5 +1,5 @@
 <?php
-require '../koneksi.php';
+require 'koneksi.php';
 /** @var mysqli $conn */
 
 header('Content-Type: application/json');
