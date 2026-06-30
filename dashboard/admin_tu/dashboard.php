@@ -351,7 +351,10 @@ $nama_tampil = $_SESSION['nama'] ?? 'Petugas TU';
     </div>
 
     <?php foreach ($data_verifikasi as $r) {
-        $file_aman = rawurlencode($r['file_sertifikat'] ?? '');
+        $images = [];
+        if (!empty($r['file_trofi'])) $images[] = $r['file_trofi'];
+        if (!empty($r['file_sertifikat'])) $images[] = $r['file_sertifikat'];
+        if (empty($images)) $images[] = 'logo.png';
     ?>
         <div class="modal fade text-start" id="tolakModal<?php echo $r['id_prestasi']; ?>" tabindex="-1">
             <div class="modal-dialog modal-dialog-centered">
@@ -383,11 +386,32 @@ $nama_tampil = $_SESSION['nama'] ?? 'Petugas TU';
             <div class="modal-dialog modal-dialog-centered modal-lg">
                 <div class="modal-content custom-modal shadow-lg">
                     <div class="modal-header" style="background-color: #002b5c; color: white;">
-                        <h6 class="modal-title fw-bold">Pratinjau Sertifikat: <?php echo htmlspecialchars($r['nama_siswa'] ?? '-'); ?></h6>
+                        <h6 class="modal-title fw-bold">Pratinjau Dokumentasi: <?php echo htmlspecialchars($r['nama_siswa'] ?? '-'); ?></h6>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body text-center p-4 bg-light">
-                        <img src="../../assets/uploads/<?php echo $file_aman; ?>" class="img-fluid rounded shadow-sm" alt="Sertifikat" style="max-height: 70vh; object-fit: contain;" onerror="this.onerror=null; this.src='../../assets/images/logo.png';">
+                        <div id="modalSliderApproval<?php echo $r['id_prestasi']; ?>" class="carousel slide carousel-dark" data-bs-ride="carousel">
+                            <div class="carousel-inner">
+                                <?php foreach ($images as $idx => $img) { 
+                                    $active = $idx === 0 ? 'active' : '';
+                                    $file_aman = rawurlencode($img);
+                                ?>
+                                    <div class="carousel-item <?php echo $active; ?>">
+                                        <img src="../../assets/uploads/<?php echo $file_aman; ?>" class="img-fluid rounded shadow-sm d-block mx-auto" alt="Dokumentasi" style="max-height: 70vh; object-fit: contain;" onerror="this.onerror=null; this.src='../../assets/images/logo.png';">
+                                    </div>
+                                <?php } ?>
+                            </div>
+                            <?php if (count($images) > 1) { ?>
+                                <button class="carousel-control-prev" type="button" data-bs-target="#modalSliderApproval<?php echo $r['id_prestasi']; ?>" data-bs-slide="prev">
+                                    <span class="carousel-control-prev-icon bg-dark rounded-circle p-2" aria-hidden="true"></span>
+                                    <span class="visually-hidden">Previous</span>
+                                </button>
+                                <button class="carousel-control-next" type="button" data-bs-target="#modalSliderApproval<?php echo $r['id_prestasi']; ?>" data-bs-slide="next">
+                                    <span class="carousel-control-next-icon bg-dark rounded-circle p-2" aria-hidden="true"></span>
+                                    <span class="visually-hidden">Next</span>
+                                </button>
+                            <?php } ?>
+                        </div>
                     </div>
                 </div>
             </div>

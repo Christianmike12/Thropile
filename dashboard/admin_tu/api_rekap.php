@@ -8,12 +8,13 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != "Admin TU") {
     exit();
 }
 
-$filter_mode = $_POST['filter_mode'] ?? 'all';
-$tahun_filter = $_POST['tahun'] ?? date('Y');
-$bulan_filter = $_POST['bulan'] ?? date('n');
-$ta_awal_filter = $_POST['ta_awal'] ?? date('Y');
-$tanggal_awal = $_POST['tanggal_awal'] ?? date('Y-m-01');
-$tanggal_akhir = $_POST['tanggal_akhir'] ?? date('Y-m-t');
+$filter_mode = mysqli_real_escape_string($conn, $_POST['filter_mode'] ?? 'all');
+$tahun_filter = mysqli_real_escape_string($conn, $_POST['tahun'] ?? date('Y'));
+$bulan_filter = mysqli_real_escape_string($conn, $_POST['bulan'] ?? date('n'));
+$ta_awal_filter = mysqli_real_escape_string($conn, $_POST['ta_awal'] ?? date('Y'));
+$tanggal_awal = mysqli_real_escape_string($conn, $_POST['tanggal_awal'] ?? date('Y-m-01'));
+$tanggal_akhir = mysqli_real_escape_string($conn, $_POST['tanggal_akhir'] ?? date('Y-m-t'));
+
 
 $where = "p.status_data='Approved'";
 

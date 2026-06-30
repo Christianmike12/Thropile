@@ -10,12 +10,13 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != "Kepala Sekolah") {
 
 $bulanIndo = [1 => "Januari", 2 => "Februari", 3 => "Maret", 4 => "April", 5 => "Mei", 6 => "Juni", 7 => "Juli", 8 => "Agustus", 9 => "September", 10 => "Oktober", 11 => "November", 12 => "Desember"];
 
-$mode_filter = $_GET['filter_mode'] ?? 'all';
-$tahun_filter = $_GET['tahun'] ?? date('Y');
-$bulan_filter = $_GET['bulan'] ?? date('n');
-$ta_awal_filter = $_GET['ta_awal'] ?? date('Y');
-$tanggal_awal = $_GET['tanggal_awal'] ?? date('Y-m-01');
-$tanggal_akhir = $_GET['tanggal_akhir'] ?? date('Y-m-t');
+$mode_filter = mysqli_real_escape_string($conn, $_GET['filter_mode'] ?? 'all');
+$tahun_filter = mysqli_real_escape_string($conn, $_GET['tahun'] ?? date('Y'));
+$bulan_filter = mysqli_real_escape_string($conn, $_GET['bulan'] ?? date('n'));
+$ta_awal_filter = mysqli_real_escape_string($conn, $_GET['ta_awal'] ?? date('Y'));
+$tanggal_awal = mysqli_real_escape_string($conn, $_GET['tanggal_awal'] ?? date('Y-m-01'));
+$tanggal_akhir = mysqli_real_escape_string($conn, $_GET['tanggal_akhir'] ?? date('Y-m-t'));
+
 
 $where = "p.status_data='Approved'";
 

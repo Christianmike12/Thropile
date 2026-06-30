@@ -103,7 +103,7 @@ $tanggal_cetak = date('d') . " " . $bulanIndo[date('n') - 1] . " " . date('Y');
                 <div class="ttd-box">
                     Kesamben, <?php echo $tanggal_cetak; ?><br>
                     Mengetahui,<br>
-                    Kepala Seko,<br><br>
+                    Kepala Sekolah,<br><br>
                     <div class="space-ttd">
                         <img src="../../assets/images/tandatangan.png" alt="Tanda Tangan Kepsek" class="ttd-image">
                         <img src="../../assets/images/stempel.png" alt="Stempel Resmi" class="stempel-image">
