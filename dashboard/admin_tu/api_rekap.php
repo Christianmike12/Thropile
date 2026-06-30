@@ -62,6 +62,35 @@ if ($q_rekap && mysqli_num_rows($q_rekap) > 0) {
             <td><button type='button' class='btn btn-outline-dark btn-sm rounded-pill' data-bs-toggle='modal' data-bs-target='#previewModalRekap$id_p'>Lihat</button></td>
         </tr>";
 
+        $images_modal = [];
+        if (!empty($r['file_trofi'])) $images_modal[] = $r['file_trofi'];
+        if (!empty($r['file_sertifikat'])) $images_modal[] = $r['file_sertifikat'];
+        if (empty($images_modal)) $images_modal[] = 'logo.png';
+
+        $carousel_inner = "";
+        foreach ($images_modal as $idx => $img) {
+            $active = $idx === 0 ? 'active' : '';
+            $img_url = rawurlencode($img);
+            $carousel_inner .= "
+                <div class='carousel-item $active'>
+                    <img src='../../assets/uploads/$img_url' class='img-fluid rounded shadow-sm d-block mx-auto' style='max-height: 70vh; object-fit: contain;' onerror=\"this.onerror=null; this.src='../../assets/images/logo.png';\">
+                </div>
+            ";
+        }
+        $carousel_controls = "";
+        if (count($images_modal) > 1) {
+            $carousel_controls = "
+                <button class='carousel-control-prev' type='button' data-bs-target='#modalSliderRekap$id_p' data-bs-slide='prev'>
+                    <span class='carousel-control-prev-icon bg-dark rounded-circle p-2' aria-hidden='true'></span>
+                    <span class='visually-hidden'>Previous</span>
+                </button>
+                <button class='carousel-control-next' type='button' data-bs-target='#modalSliderRekap$id_p' data-bs-slide='next'>
+                    <span class='carousel-control-next-icon bg-dark rounded-circle p-2' aria-hidden='true'></span>
+                    <span class='visually-hidden'>Next</span>
+                </button>
+            ";
+        }
+
         $html_modal .= "<div class='modal fade' id='previewModalRekap$id_p' tabindex='-1'>
             <div class='modal-dialog modal-dialog-centered modal-lg'>
                 <div class='modal-content custom-modal shadow-lg'>
@@ -70,7 +99,12 @@ if ($q_rekap && mysqli_num_rows($q_rekap) > 0) {
                         <button type='button' class='btn-close btn-close-white' data-bs-dismiss='modal'></button>
                     </div>
                     <div class='modal-body text-center p-4 bg-light'>
-                        <img src='../../assets/uploads/$file' class='img-fluid rounded shadow-sm' style='max-height: 70vh; object-fit: contain;' onerror=\"this.onerror=null; this.src='../../assets/images/logo.png';\">
+                        <div id='modalSliderRekap$id_p' class='carousel slide carousel-dark' data-bs-ride='carousel'>
+                            <div class='carousel-inner'>
+                                $carousel_inner
+                            </div>
+                            $carousel_controls
+                        </div>
                     </div>
                 </div>
             </div>

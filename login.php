@@ -31,8 +31,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['form_type'])) {
         $username_req = mysqli_real_escape_string($conn, $_POST['username_req']);
         $cek1 = mysqli_query($conn, "SELECT nisn FROM siswa WHERE nisn='$username_req'");
         $cek2 = mysqli_query($conn, "SELECT nip FROM guru WHERE nip='$username_req'");
+        $cek3 = mysqli_query($conn, "SELECT nip FROM admin_tu WHERE username='$username_req' OR nip='$username_req'");
+        $cek4 = mysqli_query($conn, "SELECT nip FROM kepala_sekolah WHERE username='$username_req' OR nip='$username_req'");
+        $cek5 = mysqli_query($conn, "SELECT username FROM super_admin WHERE username='$username_req'");
 
-        if (mysqli_num_rows($cek1) > 0 || mysqli_num_rows($cek2) > 0) {
+        if (mysqli_num_rows($cek1) > 0 || mysqli_num_rows($cek2) > 0 || mysqli_num_rows($cek3) > 0 || mysqli_num_rows($cek4) > 0 || mysqli_num_rows($cek5) > 0) {
             mysqli_query($conn, "UPDATE request_reset SET status_req='Selesai' WHERE username='$username_req'");
             mysqli_query($conn, "INSERT INTO request_reset (username, status_req) VALUES ('$username_req', 'Pending')");
             $response = ['status' => 'success', 'msg' => "<b>Terkirim!</b> Notifikasi telah masuk ke sistem TU.<br>Silakan temui Admin untuk mengambil kode."];
@@ -67,11 +70,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['form_type'])) {
                     $response = ['status' => 'expired', 'msg' => "<b>Kadaluarsa!</b> Kode otorisasi lewat 5 menit. Silakan ulangi request."];
                 } else {
                     $password_fix = password_hash($password_baru, PASSWORD_DEFAULT);
-                    $cek_siswa = mysqli_query($conn, "SELECT * FROM siswa WHERE nisn='$username'");
-                    if (mysqli_num_rows($cek_siswa) > 0) {
+                    
+                    if (mysqli_num_rows(mysqli_query($conn, "SELECT nisn FROM siswa WHERE nisn='$username'")) > 0) {
                         mysqli_query($conn, "UPDATE siswa SET password='$password_fix' WHERE nisn='$username'");
-                    } else {
+                    } else if (mysqli_num_rows(mysqli_query($conn, "SELECT nip FROM guru WHERE nip='$username'")) > 0) {
                         mysqli_query($conn, "UPDATE guru SET password='$password_fix' WHERE nip='$username'");
+                    } else if (mysqli_num_rows(mysqli_query($conn, "SELECT nip FROM admin_tu WHERE username='$username' OR nip='$username'")) > 0) {
+                        mysqli_query($conn, "UPDATE admin_tu SET PASSWORD='$password_fix' WHERE username='$username' OR nip='$username'");
+                    } else if (mysqli_num_rows(mysqli_query($conn, "SELECT nip FROM kepala_sekolah WHERE username='$username' OR nip='$username'")) > 0) {
+                        mysqli_query($conn, "UPDATE kepala_sekolah SET PASSWORD='$password_fix' WHERE username='$username' OR nip='$username'");
+                    } else if (mysqli_num_rows(mysqli_query($conn, "SELECT username FROM super_admin WHERE username='$username'")) > 0) {
+                        mysqli_query($conn, "UPDATE super_admin SET password='$password_fix' WHERE username='$username'");
                     }
                     mysqli_query($conn, "UPDATE request_reset SET status_req='Selesai' WHERE id_request=" . $data_req['id_request']);
                     $response = ['status' => 'success_reset', 'msg' => "<b>Berhasil!</b> Password Anda telah direset.<br>Silakan kembali ke halaman login."];

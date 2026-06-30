@@ -15,7 +15,16 @@ if (isset($_POST['edit_profil_guru'])) {
     $nama_guru = $_POST['nama_guru'];
     $pass_guru = $_POST['pass_guru'];
 
-    mysqli_query($conn, "UPDATE guru SET nama_guru='$nama_guru', PASSWORD='$pass_guru' WHERE nip='$nip_guru_edit'");
+    if (!empty($pass_guru)) {
+        if (strlen($pass_guru) < 8 || !preg_match("/[a-zA-Z]/", $pass_guru) || !preg_match("/\d/", $pass_guru)) {
+            echo "<script>alert('Password minimal 8 karakter, serta harus mengandung kombinasi huruf dan angka!'); window.history.back();</script>";
+            exit();
+        }
+        $pass_guru_hash = password_hash($pass_guru, PASSWORD_DEFAULT);
+        mysqli_query($conn, "UPDATE guru SET nama_guru='$nama_guru', PASSWORD='$pass_guru_hash' WHERE nip='$nip_guru_edit'");
+    } else {
+        mysqli_query($conn, "UPDATE guru SET nama_guru='$nama_guru' WHERE nip='$nip_guru_edit'");
+    }
 
     $_SESSION['nama'] = $nama_guru;
     echo "<script>alert('Profil Guru berhasil diperbarui!'); window.location='dashboard.php';</script>";
@@ -506,8 +515,8 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'data';
                         <input type="text" name="nama_guru" class="form-control" value="<?php echo $dt_profil['nama_guru'] ?? ''; ?>" required>
                     </div>
                     <div class="mb-2">
-                        <label class="form-label small fw-bold text-navy">Password Akun</label>
-                        <input type="password" name="pass_guru" class="form-control" value="<?php echo $dt_profil['PASSWORD'] ?? ''; ?>" required>
+                        <label class="form-label small fw-bold text-navy">Password Akun (Kosongkan jika tidak diubah)</label>
+                        <input type="password" name="pass_guru" class="form-control" placeholder="Minimal 8 karakter, kombinasi huruf & angka" pattern="(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}" title="Password minimal 8 karakter, mengandung huruf dan angka">
                     </div>
                 </div>
                 <div class="modal-footer border-0 pt-0">

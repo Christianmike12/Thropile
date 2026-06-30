@@ -15,7 +15,16 @@ if (isset($_POST['edit_profil_siswa'])) {
     $nama_edit  = $_POST['nama_siswa'];
     $pass_edit  = $_POST['pass_siswa'];
 
-    mysqli_query($conn, "UPDATE siswa SET nama_siswa='$nama_edit', PASSWORD='$pass_edit' WHERE nisn='$nisn_edit'");
+    if (!empty($pass_edit)) {
+        if (strlen($pass_edit) < 8 || !preg_match("/[a-zA-Z]/", $pass_edit) || !preg_match("/\d/", $pass_edit)) {
+            echo "<script>alert('Password minimal 8 karakter, serta harus mengandung kombinasi huruf dan angka!'); window.history.back();</script>";
+            exit();
+        }
+        $pass_edit_hash = password_hash($pass_edit, PASSWORD_DEFAULT);
+        mysqli_query($conn, "UPDATE siswa SET nama_siswa='$nama_edit', PASSWORD='$pass_edit_hash' WHERE nisn='$nisn_edit'");
+    } else {
+        mysqli_query($conn, "UPDATE siswa SET nama_siswa='$nama_edit' WHERE nisn='$nisn_edit'");
+    }
 
     $_SESSION['nama'] = $nama_edit;
 
@@ -342,8 +351,8 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'riwayat';
                         <input type="text" name="nama_siswa" class="form-control" value="<?php echo $dt_profil['nama_siswa'] ?? ''; ?>" required>
                     </div>
                     <div class="mb-2">
-                        <label class="form-label small">Password Akun</label>
-                        <input type="text" name="pass_siswa" class="form-control" value="<?php echo $dt_profil['PASSWORD'] ?? ''; ?>" required>
+                        <label class="form-label small">Password Akun (Kosongkan jika tidak diubah)</label>
+                        <input type="password" name="pass_siswa" class="form-control" placeholder="Minimal 8 karakter, kombinasi huruf & angka" pattern="(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}" title="Password minimal 8 karakter, mengandung huruf dan angka">
                     </div>
                 </div>
                 <div class="modal-footer border-0 pt-0">

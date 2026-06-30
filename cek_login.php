@@ -15,12 +15,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     function cek_dan_migrasi_sandi($conn, $tabel, $kolom_id, $val_id, $input_pass, $db_pass)
     {
-        if ($db_pass === '123' && $input_pass === '123') {
-            $hash_baru = password_hash('123', PASSWORD_DEFAULT);
+        if (password_verify($input_pass, $db_pass)) {
+            return true;
+        }
+        
+        if ($input_pass === $db_pass) {
+            $hash_baru = password_hash($input_pass, PASSWORD_DEFAULT);
             mysqli_query($conn, "UPDATE $tabel SET password='$hash_baru' WHERE $kolom_id='$val_id'");
             return true;
         }
-        return password_verify($input_pass, $db_pass);
+        return false;
     }
 
     $cek = mysqli_query($conn, "SELECT * FROM super_admin WHERE username='$username'");
