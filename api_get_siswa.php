@@ -1,12 +1,18 @@
 <?php
+session_start();
 require 'koneksi.php';
 /** @var mysqli $conn */
 
 header('Content-Type: application/json');
 
+if (!isset($_SESSION['role'])) {
+    echo json_encode(['status' => 'error', 'msg' => 'Akses ditolak!']);
+    exit();
+}
+
 if (isset($_GET['kelas'])) {
-    $kelas = mysqli_real_escape_string($conn, $_GET['kelas']);
-    $query = mysqli_query($conn, "SELECT nisn, nama_siswa FROM siswa WHERE kelas = '$kelas' AND status = 'Aktif' ORDER BY nama_siswa ASC");
+    $kelas = trim($_GET['kelas']);
+    $query = db_query($conn, "SELECT nisn, nama_siswa FROM siswa WHERE kelas = ? AND status = 'Aktif' ORDER BY nama_siswa ASC", "s", $kelas);
 
     $data_siswa = [];
     while ($row = mysqli_fetch_assoc($query)) {

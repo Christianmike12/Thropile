@@ -8,30 +8,49 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != "Admin TU") {
     exit();
 }
 
-$filter_mode = mysqli_real_escape_string($conn, $_POST['filter_mode'] ?? 'all');
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'] ?? '', $_POST['csrf_token'])) {
+        echo json_encode(['tabel' => '<tr><td colspan="7">CSRF Token Invalid</td></tr>', 'modal' => '']);
+        exit();
+    }
+}
+
+$filter_mode = trim($_POST['filter_mode'] ?? 'all');
 $tahun_filter = (int)($_POST['tahun'] ?? date('Y'));
 $bulan_filter = (int)($_POST['bulan'] ?? date('n'));
 $ta_awal_filter = (int)($_POST['ta_awal'] ?? date('Y'));
-$tanggal_awal = mysqli_real_escape_string($conn, $_POST['tanggal_awal'] ?? date('Y-m-01'));
-$tanggal_akhir = mysqli_real_escape_string($conn, $_POST['tanggal_akhir'] ?? date('Y-m-t'));
-
+$tanggal_awal = trim($_POST['tanggal_awal'] ?? date('Y-m-01'));
+$tanggal_akhir = trim($_POST['tanggal_akhir'] ?? date('Y-m-t'));
 
 $where = "p.status_data='Approved'";
+$types = "";
+$params = [];
 
 if ($filter_mode == 'tahun') {
-    $where .= " AND YEAR(p.tanggal_pelaksanaan)='$tahun_filter'";
+    $where .= " AND YEAR(p.tanggal_pelaksanaan)=?";
+    $types .= "i";
+    $params[] = $tahun_filter;
 } elseif ($filter_mode == 'bulan') {
-    $where .= " AND YEAR(p.tanggal_pelaksanaan)='$tahun_filter' AND MONTH(p.tanggal_pelaksanaan)='$bulan_filter'";
+    $where .= " AND YEAR(p.tanggal_pelaksanaan)=? AND MONTH(p.tanggal_pelaksanaan)=?";
+    $types .= "ii";
+    $params[] = $tahun_filter;
+    $params[] = $bulan_filter;
 } elseif ($filter_mode == 'ta') {
     $ta_akhir = $ta_awal_filter + 1;
-    $where .= " AND ((YEAR(p.tanggal_pelaksanaan)='$ta_awal_filter' AND MONTH(p.tanggal_pelaksanaan) >= 7) OR (YEAR(p.tanggal_pelaksanaan)='$ta_akhir' AND MONTH(p.tanggal_pelaksanaan) <= 6))";
+    $where .= " AND ((YEAR(p.tanggal_pelaksanaan)=? AND MONTH(p.tanggal_pelaksanaan) >= 7) OR (YEAR(p.tanggal_pelaksanaan)=? AND MONTH(p.tanggal_pelaksanaan) <= 6))";
+    $types .= "ii";
+    $params[] = $ta_awal_filter;
+    $params[] = $ta_akhir;
 } elseif ($filter_mode == 'rentang') {
     $start_date = date('Y-m-d', strtotime($tanggal_awal));
     $end_date = date('Y-m-d', strtotime($tanggal_akhir));
-    $where .= " AND p.tanggal_pelaksanaan BETWEEN '$start_date' AND '$end_date'";
+    $where .= " AND p.tanggal_pelaksanaan BETWEEN ? AND ?";
+    $types .= "ss";
+    $params[] = $start_date;
+    $params[] = $end_date;
 }
 
-$q_rekap = mysqli_query($conn, "SELECT p.*, s.nama_siswa, s.kelas FROM prestasi p JOIN siswa s ON p.nisn = s.nisn WHERE $where ORDER BY FIELD(p.tingkat,'Internasional','Nasional','Provinsi','Kota/Kabupaten'), p.peringkat ASC, s.kelas ASC");
+$q_rekap = db_query($conn, "SELECT p.*, s.nama_siswa, s.kelas FROM prestasi p JOIN siswa s ON p.nisn = s.nisn WHERE $where ORDER BY FIELD(p.tingkat,'Internasional','Nasional','Provinsi','Kota/Kabupaten'), p.peringkat ASC, s.kelas ASC", $types, ...$params);
 
 $html_tabel = "";
 $html_modal = "";

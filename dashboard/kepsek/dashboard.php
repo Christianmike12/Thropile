@@ -8,10 +8,14 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != "Kepala Sekolah") {
     exit();
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verify_csrf();
+}
+
 if (isset($_POST['edit_profil_kepsek'])) {
-    $nip_kepsek  = mysqli_real_escape_string($conn, $_POST['nip_kepsek']);
-    $nama_kepsek = mysqli_real_escape_string($conn, $_POST['nama_kepsek']);
-    $user_kepsek = mysqli_real_escape_string($conn, $_POST['user_kepsek']);
+    $nip_kepsek  = trim($_POST['nip_kepsek']);
+    $nama_kepsek = trim($_POST['nama_kepsek']);
+    $user_kepsek = trim($_POST['user_kepsek']);
     $pass_kepsek = trim($_POST['pass_kepsek']);
 
     if (!empty($pass_kepsek)) {
@@ -20,9 +24,9 @@ if (isset($_POST['edit_profil_kepsek'])) {
             exit();
         }
         $pass_kepsek_hash = password_hash($pass_kepsek, PASSWORD_DEFAULT);
-        mysqli_query($conn, "UPDATE kepala_sekolah SET nama_kepala_sekolah='$nama_kepsek', username='$user_kepsek', PASSWORD='$pass_kepsek_hash' WHERE nip='$nip_kepsek'");
+        db_query($conn, "UPDATE kepala_sekolah SET nama_kepala_sekolah=?, username=?, PASSWORD=? WHERE nip=?", "ssss", $nama_kepsek, $user_kepsek, $pass_kepsek_hash, $_SESSION['nip']);
     } else {
-        mysqli_query($conn, "UPDATE kepala_sekolah SET nama_kepala_sekolah='$nama_kepsek', username='$user_kepsek' WHERE nip='$nip_kepsek'");
+        db_query($conn, "UPDATE kepala_sekolah SET nama_kepala_sekolah=?, username=? WHERE nip=?", "sss", $nama_kepsek, $user_kepsek, $_SESSION['nip']);
     }
 
     $_SESSION['nama'] = $nama_kepsek;
@@ -38,17 +42,17 @@ $tahun_ini  = date('Y');
 $bulan_ini  = date('m');
 $bulan_lalu = date('m', strtotime('-1 month'));
 
-$t_akademik     = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as jml FROM prestasi WHERE status_data='Approved' AND kategori LIKE '%Akademik%'"))['jml'] ?? 0;
-$t_non_akademik = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as jml FROM prestasi WHERE status_data='Approved' AND kategori NOT LIKE '%Akademik%'"))['jml'] ?? 0;
+$t_akademik     = mysqli_fetch_assoc(db_query($conn, "SELECT COUNT(*) as jml FROM prestasi WHERE status_data='Approved' AND kategori LIKE '%Akademik%'"))['jml'] ?? 0;
+$t_non_akademik = mysqli_fetch_assoc(db_query($conn, "SELECT COUNT(*) as jml FROM prestasi WHERE status_data='Approved' AND kategori NOT LIKE '%Akademik%'"))['jml'] ?? 0;
 
 $data_jumlah_per_bulan = [];
 for ($i = 1; $i <= 12; $i++) {
-    $q_chart = mysqli_query($conn, "SELECT COUNT(*) as jml FROM prestasi p WHERE status_data='Approved' AND YEAR(p.tanggal_pelaksanaan)='$tahun_ini' AND MONTH(p.tanggal_pelaksanaan)='$i'");
+    $q_chart = db_query($conn, "SELECT COUNT(*) as jml FROM prestasi p WHERE status_data='Approved' AND YEAR(p.tanggal_pelaksanaan)=? AND MONTH(p.tanggal_pelaksanaan)=?", "ii", $tahun_ini, $i);
     $data_jumlah_per_bulan[] = $q_chart ? (mysqli_fetch_assoc($q_chart)['jml'] ?? 0) : 0;
 }
 
-$ai_sekarang = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as jml FROM prestasi WHERE status_data='Approved' AND YEAR(tanggal_pelaksanaan)='$tahun_ini' AND MONTH(tanggal_pelaksanaan)='$bulan_ini'"))['jml'] ?? 0;
-$ai_lalu     = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as jml FROM prestasi WHERE status_data='Approved' AND YEAR(tanggal_pelaksanaan)='$tahun_ini' AND MONTH(tanggal_pelaksanaan)='$bulan_lalu'"))['jml'] ?? 0;
+$ai_sekarang = mysqli_fetch_assoc(db_query($conn, "SELECT COUNT(*) as jml FROM prestasi WHERE status_data='Approved' AND YEAR(tanggal_pelaksanaan)=? AND MONTH(tanggal_pelaksanaan)=?", "ii", $tahun_ini, $bulan_ini))['jml'] ?? 0;
+$ai_lalu     = mysqli_fetch_assoc(db_query($conn, "SELECT COUNT(*) as jml FROM prestasi WHERE status_data='Approved' AND YEAR(tanggal_pelaksanaan)=? AND MONTH(tanggal_pelaksanaan)=?", "ii", $tahun_ini, $bulan_lalu))['jml'] ?? 0;
 
 if ($ai_sekarang == 0 && $ai_lalu == 0) {
     $teks_ai = "Data belum mencukupi untuk analisis prediktif.";
@@ -64,7 +68,7 @@ if ($ai_sekarang == 0 && $ai_lalu == 0) {
 
 $bulanIndo = [1 => "Januari", 2 => "Februari", 3 => "Maret", 4 => "April", 5 => "Mei", 6 => "Juni", 7 => "Juli", 8 => "Agustus", 9 => "September", 10 => "Oktober", 11 => "November", 12 => "Desember"];
 $tahun_list = [];
-$res_tahun_tmp = mysqli_query($conn, "SELECT DISTINCT YEAR(tanggal_pelaksanaan) as tahun FROM prestasi WHERE status_data='Approved'");
+$res_tahun_tmp = db_query($conn, "SELECT DISTINCT YEAR(tanggal_pelaksanaan) as tahun FROM prestasi WHERE status_data='Approved'");
 if ($res_tahun_tmp) {
     while ($yt = mysqli_fetch_assoc($res_tahun_tmp)) {
         if (!empty($yt['tahun'])) $tahun_list[] = (int)$yt['tahun'];
@@ -73,7 +77,7 @@ if ($res_tahun_tmp) {
 if (!in_array((int)date('Y'), $tahun_list)) $tahun_list[] = (int)date('Y');
 rsort($tahun_list);
 
-$q_profil_kepsek = mysqli_query($conn, "SELECT * FROM kepala_sekolah WHERE username='{$_SESSION['username']}'");
+$q_profil_kepsek = db_query($conn, "SELECT * FROM kepala_sekolah WHERE username=?", "s", $_SESSION['username']);
 $dt_profil_kepsek = mysqli_fetch_assoc($q_profil_kepsek);
 ?>
 <!DOCTYPE html>
@@ -162,6 +166,7 @@ $dt_profil_kepsek = mysqli_fetch_assoc($q_profil_kepsek);
                 <div class="tab-pane fade <?php echo $active_tab == 'rekap' ? 'show active' : ''; ?>" id="tab-rekap">
                     <div class="filter-box">
                         <form id="formFilterRekap">
+                            <?php echo csrf_field(); ?>
                             <div class="d-flex align-items-end gap-3 flex-wrap">
                                 <div>
                                     <label class="fw-semibold text-navy mb-1" style="font-size:13px;">Mode Filter</label>
@@ -267,6 +272,7 @@ $dt_profil_kepsek = mysqli_fetch_assoc($q_profil_kepsek);
                 <div class="tab-pane fade <?php echo $active_tab == 'galeri' ? 'show active' : ''; ?>" id="tab-galeri">
                     <div class="filter-box">
                         <form id="formFilterGaleri">
+                            <?php echo csrf_field(); ?>
                             <div class="d-flex align-items-end gap-3 flex-wrap">
                                 <div>
                                     <label class="fw-semibold text-navy mb-1" style="font-size:13px;">Mode Filter Galeri</label>
@@ -319,15 +325,16 @@ $dt_profil_kepsek = mysqli_fetch_assoc($q_profil_kepsek);
     <div class="modal fade text-start" id="editProfilKepsek" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <form method="POST" class="modal-content custom-modal shadow">
+                <?php echo csrf_field(); ?>
                 <div class="modal-header" style="background-color: #002b5c; color: white;">
                     <h5 class="modal-title fw-bold">Pengaturan Akun Kepala Sekolah</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-4">
-                    <input type="hidden" name="nip_kepsek" value="<?php echo htmlspecialchars($dt_profil_kepsek['nip'] ?? ''); ?>">
-                    <div class="mb-3"><label class="form-label text-navy fw-semibold small">NIP</label><input type="text" class="form-control bg-light" value="<?php echo htmlspecialchars($dt_profil_kepsek['nip'] ?? ''); ?>" readonly></div>
-                    <div class="mb-3"><label class="form-label text-navy fw-semibold small">Nama Lengkap & Gelar</label><input type="text" name="nama_kepsek" class="form-control" value="<?php echo htmlspecialchars($dt_profil_kepsek['nama_kepala_sekolah'] ?? ''); ?>" required></div>
-                    <div class="mb-3"><label class="form-label text-navy fw-semibold small">Username</label><input type="text" name="user_kepsek" class="form-control" value="<?php echo htmlspecialchars($dt_profil_kepsek['username'] ?? ''); ?>" required></div>
+                    <input type="hidden" name="nip_kepsek" value="<?php echo e($dt_profil_kepsek['nip'] ?? ''); ?>">
+                    <div class="mb-3"><label class="form-label text-navy fw-semibold small">NIP</label><input type="text" class="form-control bg-light" value="<?php echo e($dt_profil_kepsek['nip'] ?? ''); ?>" readonly></div>
+                    <div class="mb-3"><label class="form-label text-navy fw-semibold small">Nama Lengkap & Gelar</label><input type="text" name="nama_kepsek" class="form-control" value="<?php echo e($dt_profil_kepsek['nama_kepala_sekolah'] ?? ''); ?>" required></div>
+                    <div class="mb-3"><label class="form-label text-navy fw-semibold small">Username</label><input type="text" name="user_kepsek" class="form-control" value="<?php echo e($dt_profil_kepsek['username'] ?? ''); ?>" required></div>
                     <div class="mb-2"><label class="form-label text-navy fw-semibold small">Password Akun (Kosongkan jika tidak diubah)</label><input type="password" name="pass_kepsek" class="form-control" placeholder="Min 8 karakter, kombinasi huruf & angka" pattern="(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}" title="Password minimal 8 karakter, mengandung huruf dan angka"></div>
                 </div>
                 <div class="modal-footer border-0 pt-0 px-4 pb-4">

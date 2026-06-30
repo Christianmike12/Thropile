@@ -10,30 +10,43 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != "Admin TU") {
 
 $bulanIndo = [1 => "Januari", 2 => "Februari", 3 => "Maret", 4 => "April", 5 => "Mei", 6 => "Juni", 7 => "Juli", 8 => "Agustus", 9 => "September", 10 => "Oktober", 11 => "November", 12 => "Desember"];
 
-$mode_filter = mysqli_real_escape_string($conn, $_GET['filter_mode'] ?? 'all');
+$mode_filter = trim($_GET['filter_mode'] ?? 'all');
 $tahun_filter = (int)($_GET['tahun'] ?? date('Y'));
 $bulan_filter = (int)($_GET['bulan'] ?? date('n'));
 $ta_awal_filter = (int)($_GET['ta_awal'] ?? date('Y'));
-$tanggal_awal = mysqli_real_escape_string($conn, $_GET['tanggal_awal'] ?? date('Y-m-01'));
-$tanggal_akhir = mysqli_real_escape_string($conn, $_GET['tanggal_akhir'] ?? date('Y-m-t'));
+$tanggal_awal = trim($_GET['tanggal_awal'] ?? date('Y-m-01'));
+$tanggal_akhir = trim($_GET['tanggal_akhir'] ?? date('Y-m-t'));
 
 
 $where = "p.status_data='Approved'";
+$types = "";
+$params = [];
 
 if ($mode_filter == 'bulan') {
-    $where .= " AND YEAR(p.tanggal_pelaksanaan)='$tahun_filter' AND MONTH(p.tanggal_pelaksanaan)='$bulan_filter'";
+    $where .= " AND YEAR(p.tanggal_pelaksanaan)=? AND MONTH(p.tanggal_pelaksanaan)=?";
+    $types .= "ii";
+    $params[] = $tahun_filter;
+    $params[] = $bulan_filter;
     $judul_periode = "Bulan " . $bulanIndo[(int)$bulan_filter] . " " . $tahun_filter;
 } elseif ($mode_filter == 'ta') {
     $tahun_akhir_ta = $ta_awal_filter + 1;
-    $where .= " AND ((YEAR(p.tanggal_pelaksanaan)='$ta_awal_filter' AND MONTH(p.tanggal_pelaksanaan) >= 7) OR (YEAR(p.tanggal_pelaksanaan)='$tahun_akhir_ta' AND MONTH(p.tanggal_pelaksanaan) <= 6))";
+    $where .= " AND ((YEAR(p.tanggal_pelaksanaan)=? AND MONTH(p.tanggal_pelaksanaan) >= 7) OR (YEAR(p.tanggal_pelaksanaan)=? AND MONTH(p.tanggal_pelaksanaan) <= 6))";
+    $types .= "ii";
+    $params[] = $ta_awal_filter;
+    $params[] = $tahun_akhir_ta;
     $judul_periode = "Tahun Akademik $ta_awal_filter / $tahun_akhir_ta";
 } elseif ($mode_filter == 'rentang') {
     $start_date = date('Y-m-d', strtotime($tanggal_awal));
     $end_date = date('Y-m-d', strtotime($tanggal_akhir));
-    $where .= " AND p.tanggal_pelaksanaan BETWEEN '$start_date' AND '$end_date'";
+    $where .= " AND p.tanggal_pelaksanaan BETWEEN ? AND ?";
+    $types .= "ss";
+    $params[] = $start_date;
+    $params[] = $end_date;
     $judul_periode = "Rentang Waktu: " . date('d M Y', strtotime($start_date)) . " s/d " . date('d M Y', strtotime($end_date));
 } elseif ($mode_filter == 'tahun') {
-    $where .= " AND YEAR(p.tanggal_pelaksanaan)='$tahun_filter'";
+    $where .= " AND YEAR(p.tanggal_pelaksanaan)=?";
+    $types .= "i";
+    $params[] = $tahun_filter;
     $judul_periode = "Tahun $tahun_filter";
 } else {
     $judul_periode = "Keseluruhan Waktu";
@@ -41,9 +54,9 @@ if ($mode_filter == 'bulan') {
 
 $narasi = "Sistem Informasi Manajemen Prestasi Siswa (Trophile) menyatakan bahwa rekapitulasi di bawah ini memuat rekam jejak prestasi resmi akademik maupun non-akademik siswa yang telah tervalidasi oleh pihak sekolah.";
 
-$q_rekap = mysqli_query($conn, "SELECT p.*, s.nama_siswa, s.kelas FROM prestasi p JOIN siswa s ON p.nisn = s.nisn WHERE $where ORDER BY FIELD(p.tingkat,'Internasional','Nasional','Provinsi','Kota/Kabupaten'), p.peringkat ASC, s.kelas ASC");
+$q_rekap = db_query($conn, "SELECT p.*, s.nama_siswa, s.kelas FROM prestasi p JOIN siswa s ON p.nisn = s.nisn WHERE $where ORDER BY FIELD(p.tingkat,'Internasional','Nasional','Provinsi','Kota/Kabupaten'), p.peringkat ASC, s.kelas ASC", $types, ...$params);
 
-$query_kepsek = mysqli_query($conn, "SELECT * FROM kepala_sekolah LIMIT 1");
+$query_kepsek = db_query($conn, "SELECT * FROM kepala_sekolah LIMIT 1");
 $data_kepsek = mysqli_fetch_assoc($query_kepsek);
 $tanggal_cetak = date('d') . " " . $bulanIndo[date('n')] . " " . date('Y');
 ?>

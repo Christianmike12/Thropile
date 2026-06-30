@@ -8,11 +8,15 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != "Guru") {
     exit();
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verify_csrf();
+}
+
 $nip_guru = $_SESSION['nip'];
 
 if (isset($_POST['edit_profil_guru'])) {
-    $nip_guru_edit  = mysqli_real_escape_string($conn, $_POST['nip_guru']);
-    $nama_guru = mysqli_real_escape_string($conn, $_POST['nama_guru']);
+    $nip_guru_edit  = trim($_POST['nip_guru']);
+    $nama_guru = trim($_POST['nama_guru']);
     $pass_guru = trim($_POST['pass_guru']);
 
     if (!empty($pass_guru)) {
@@ -21,9 +25,9 @@ if (isset($_POST['edit_profil_guru'])) {
             exit();
         }
         $pass_guru_hash = password_hash($pass_guru, PASSWORD_DEFAULT);
-        mysqli_query($conn, "UPDATE guru SET nama_guru='$nama_guru', PASSWORD='$pass_guru_hash' WHERE nip='$nip_guru_edit'");
+        db_query($conn, "UPDATE guru SET nama_guru=?, PASSWORD=? WHERE nip=?", "sss", $nama_guru, $pass_guru_hash, $nip_guru);
     } else {
-        mysqli_query($conn, "UPDATE guru SET nama_guru='$nama_guru' WHERE nip='$nip_guru_edit'");
+        db_query($conn, "UPDATE guru SET nama_guru=? WHERE nip=?", "ss", $nama_guru, $nip_guru);
     }
 
     $_SESSION['nama'] = $nama_guru;
@@ -32,9 +36,10 @@ if (isset($_POST['edit_profil_guru'])) {
 }
 
 if (isset($_GET['hapus_prestasi'])) {
+    verify_get_csrf();
     $id_hapus = (int)$_GET['hapus_prestasi'];
 
-    $q_file = mysqli_query($conn, "SELECT file_sertifikat, file_trofi FROM prestasi WHERE id_prestasi=$id_hapus AND nip_guru='$nip_guru'");
+    $q_file = db_query($conn, "SELECT file_sertifikat, file_trofi FROM prestasi WHERE id_prestasi=? AND nip_guru=?", "is", $id_hapus, $nip_guru);
     if (mysqli_num_rows($q_file) > 0) {
         $dt_file = mysqli_fetch_assoc($q_file);
 
@@ -44,7 +49,7 @@ if (isset($_GET['hapus_prestasi'])) {
         $path_foto = "../../assets/uploads/" . $dt_file['file_trofi'];
         if (!empty($dt_file['file_trofi']) && file_exists($path_foto)) unlink($path_foto);
 
-        mysqli_query($conn, "DELETE FROM prestasi WHERE id_prestasi=$id_hapus");
+        db_query($conn, "DELETE FROM prestasi WHERE id_prestasi=? AND nip_guru=?", "is", $id_hapus, $nip_guru);
         echo "<script>alert('Data prestasi berhasil dihapus!'); window.location='dashboard.php';</script>";
     }
     exit();
@@ -52,11 +57,15 @@ if (isset($_GET['hapus_prestasi'])) {
 
 if (isset($_POST['edit_prestasi_guru'])) {
     $id_p = (int)$_POST['id_prestasi'];
-    $nama_lomba = mysqli_real_escape_string($conn, $_POST['nama_lomba']);
-    $tingkat = mysqli_real_escape_string($conn, $_POST['tingkat']);
-    $peringkat = mysqli_real_escape_string($conn, $_POST['peringkat']);
+    $nama_lomba = trim($_POST['nama_lomba']);
+    $tingkat = trim($_POST['tingkat']);
+    $peringkat = trim($_POST['peringkat']);
 
-    $q_lama = mysqli_query($conn, "SELECT file_sertifikat, file_trofi, nisn FROM prestasi WHERE id_prestasi=$id_p");
+    $q_lama = db_query($conn, "SELECT file_sertifikat, file_trofi, nisn FROM prestasi WHERE id_prestasi=? AND nip_guru=?", "is", $id_p, $nip_guru);
+    if (mysqli_num_rows($q_lama) == 0) {
+        echo "<script>alert('Akses ditolak!'); window.location='dashboard.php';</script>";
+        exit();
+    }
     $dt_lama = mysqli_fetch_assoc($q_lama);
     $nisn = $dt_lama['nisn'];
 
@@ -81,18 +90,18 @@ if (isset($_POST['edit_prestasi_guru'])) {
         }
     }
 
-    mysqli_query($conn, "UPDATE prestasi SET nama_lomba='$nama_lomba', tingkat='$tingkat', peringkat='$peringkat', file_sertifikat='$nama_file_sertif', file_trofi='$nama_file_foto', status_data='Pending', alasan_tolak=NULL WHERE id_prestasi='$id_p'");
+    db_query($conn, "UPDATE prestasi SET nama_lomba=?, tingkat=?, peringkat=?, file_sertifikat=?, file_trofi=?, status_data='Pending', alasan_tolak=NULL WHERE id_prestasi=? AND nip_guru=?", "sssssis", $nama_lomba, $tingkat, $peringkat, $nama_file_sertif, $nama_file_foto, $id_p, $nip_guru);
 
     echo "<script>alert('Data prestasi berhasil direvisi dan diajukan ulang!'); window.location='dashboard.php';</script>";
     exit();
 }
 
-$q_profil = mysqli_query($conn, "SELECT * FROM guru WHERE nip='$nip_guru'");
+$q_profil = db_query($conn, "SELECT * FROM guru WHERE nip=?", "s", $nip_guru);
 $dt_profil = mysqli_fetch_assoc($q_profil);
 $chart_labels = [];
 $chart_data = [];
 $chart_colors = [];
-$q_chart_status = mysqli_query($conn, "SELECT status_data, COUNT(*) as jml FROM prestasi WHERE nip_guru='$nip_guru' GROUP BY status_data");
+$q_chart_status = db_query($conn, "SELECT status_data, COUNT(*) as jml FROM prestasi WHERE nip_guru=? GROUP BY status_data", "s", $nip_guru);
 
 if ($q_chart_status && mysqli_num_rows($q_chart_status) > 0) {
     while ($row = mysqli_fetch_assoc($q_chart_status)) {
@@ -114,23 +123,34 @@ $tahun_filter   = isset($_GET['tahun'])   ? (int)$_GET['tahun']   : (int)date('Y
 $bulan_filter   = isset($_GET['bulan'])   ? (int)$_GET['bulan']   : (int)date('n');
 $ta_awal_filter = isset($_GET['ta_awal']) ? (int)$_GET['ta_awal'] : ((int)date('n') >= 7 ? (int)date('Y') : (int)date('Y') - 1);
 
+$params_filter = [];
+$types_filter = "";
+
 switch ($filter_mode) {
     case 'bulan':
-        $where_filter = "YEAR(p.tanggal_pelaksanaan)='$tahun_filter' AND MONTH(p.tanggal_pelaksanaan)='$bulan_filter'";
+        $where_filter = "YEAR(p.tanggal_pelaksanaan)=? AND MONTH(p.tanggal_pelaksanaan)=?";
+        $types_filter .= "ii";
+        $params_filter[] = $tahun_filter;
+        $params_filter[] = $bulan_filter;
         break;
     case 'ta':
         $ta_akhir_filter = $ta_awal_filter + 1;
-        $where_filter = "((YEAR(p.tanggal_pelaksanaan)='$ta_awal_filter' AND MONTH(p.tanggal_pelaksanaan) >= 7) OR (YEAR(p.tanggal_pelaksanaan)='$ta_akhir_filter' AND MONTH(p.tanggal_pelaksanaan) <= 6))";
+        $where_filter = "((YEAR(p.tanggal_pelaksanaan)=? AND MONTH(p.tanggal_pelaksanaan) >= 7) OR (YEAR(p.tanggal_pelaksanaan)=? AND MONTH(p.tanggal_pelaksanaan) <= 6))";
+        $types_filter .= "ii";
+        $params_filter[] = $ta_awal_filter;
+        $params_filter[] = $ta_akhir_filter;
         break;
     default:
-        $where_filter = "YEAR(p.tanggal_pelaksanaan)='$tahun_filter'";
+        $where_filter = "YEAR(p.tanggal_pelaksanaan)=?";
+        $types_filter .= "i";
+        $params_filter[] = $tahun_filter;
         break;
 }
 
-$q_galeri = mysqli_query($conn, "SELECT p.*, s.nama_siswa, s.kelas FROM prestasi p JOIN siswa s ON p.nisn = s.nisn WHERE p.status_data='Approved' AND $where_filter ORDER BY p.tanggal_pelaksanaan DESC");
+$q_galeri = db_query($conn, "SELECT p.*, s.nama_siswa, s.kelas FROM prestasi p JOIN siswa s ON p.nisn = s.nisn WHERE p.status_data='Approved' AND $where_filter ORDER BY p.tanggal_pelaksanaan DESC", $types_filter, ...$params_filter);
 
 $tahun_list = [];
-$res_tahun_tmp = mysqli_query($conn, "SELECT DISTINCT YEAR(tanggal_pelaksanaan) as tahun FROM prestasi WHERE status_data='Approved'");
+$res_tahun_tmp = db_query($conn, "SELECT DISTINCT YEAR(tanggal_pelaksanaan) as tahun FROM prestasi WHERE status_data='Approved'");
 if ($res_tahun_tmp) {
     while ($yt = mysqli_fetch_assoc($res_tahun_tmp)) {
         $tahun_list[] = (int)$yt['tahun'];
@@ -238,11 +258,12 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'data';
                             <tbody>
                                 <?php
                                 $no = 1;
-                                $query = "SELECT p.*, s.nama_siswa FROM prestasi p JOIN siswa s ON p.nisn = s.nisn WHERE p.nip_guru = '$nip_guru' ORDER BY p.id_prestasi DESC";
-                                $res = mysqli_query($conn, $query);
+                                $query = "SELECT p.*, s.nama_siswa FROM prestasi p JOIN siswa s ON p.nisn = s.nisn WHERE p.nip_guru = ? ORDER BY p.id_prestasi DESC";
+                                $res = db_query($conn, $query, "s", $nip_guru);
                                 $data_prestasi_binaan = [];
 
                                 if (mysqli_num_rows($res) > 0) {
+                                    $csrf_t = generate_csrf_token();
                                     while ($r = mysqli_fetch_assoc($res)) {
                                         $data_prestasi_binaan[] = $r;
                                         $st = match ($r['status_data']) {
@@ -253,17 +274,17 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'data';
 
                                         $catatan = "";
                                         if ($r['status_data'] == 'Rejected' && !empty($r['alasan_tolak'])) {
-                                            $catatan = "<div class='mt-2' style='font-size:12px; color:#dc3545; text-align:center; line-height:1.2;'><b>Alasan:</b><br>{$r['alasan_tolak']}</div>";
+                                            $catatan = "<div class='mt-2' style='font-size:12px; color:#dc3545; text-align:center; line-height:1.2;'><b>Alasan:</b><br>" . e($r['alasan_tolak']) . "</div>";
                                         }
 
                                         echo "<tr>
                                             <td><span class='badge bg-light text-dark border'>$no</span></td>
-                                            <td class='text-start fw-medium'>{$r['nama_siswa']}</td>
-                                            <td class='text-start'>{$r['nama_lomba']}</td>
-                                            <td><span class='badge bg-info text-dark px-2'>{$r['tingkat']}</span></td>
-                                            <td><span class='badge bg-light text-dark border px-2'>{$r['peringkat']}</span></td>
+                                            <td class='text-start fw-medium'>" . e($r['nama_siswa']) . "</td>
+                                            <td class='text-start'>" . e($r['nama_lomba']) . "</td>
+                                            <td><span class='badge bg-info text-dark px-2'>" . e($r['tingkat']) . "</span></td>
+                                            <td><span class='badge bg-light text-dark border px-2'>" . e($r['peringkat']) . "</span></td>
                                             <td>
-                                                <span class='badge $st px-3 py-2 rounded-pill'>{$r['status_data']}</span>
+                                                <span class='badge $st px-3 py-2 rounded-pill'>" . e($r['status_data']) . "</span>
                                                 $catatan
                                             </td>
                                             <td>";
@@ -273,7 +294,7 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'data';
                                         } else {
                                             echo "
                                                 <button type='button' class='btn btn-edit-outline btn-sm me-1 px-3' data-bs-toggle='modal' data-bs-target='#editPrestasi{$r['id_prestasi']}'>Edit</button>
-                                                <a href='?hapus_prestasi={$r['id_prestasi']}' class='btn btn-hapus-outline btn-sm px-3' onclick='return confirm(\"Yakin ingin menghapus data ini secara permanen?\")'>Hapus</a>
+                                                <a href='?hapus_prestasi={$r['id_prestasi']}&csrf_token={$csrf_t}' class='btn btn-hapus-outline btn-sm px-3' onclick='return confirm(\"Yakin ingin menghapus data ini secara permanen?\")'>Hapus</a>
                                             ";
                                         }
 
@@ -396,6 +417,7 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'data';
             <div class="modal fade text-start" id="editPrestasi<?php echo $r['id_prestasi']; ?>" tabindex="-1">
                 <div class="modal-dialog modal-dialog-centered">
                     <form method="POST" enctype="multipart/form-data" class="modal-content custom-modal shadow">
+                        <?php echo csrf_field(); ?>
                         <div class="modal-header">
                             <h5 class="modal-title fw-bold">Revisi Data Prestasi</h5>
                             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
@@ -405,13 +427,13 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'data';
 
                             <div class="mb-3 p-3 bg-light rounded border">
                                 <span class="d-block small text-muted">Siswa Binaan:</span>
-                                <span class="fw-bold text-navy"><?php echo $r['nama_siswa']; ?></span>
+                                <span class="fw-bold text-navy"><?php echo e($r['nama_siswa']); ?></span>
                                 <div class="form-text small mt-1">*Nama Siswa tidak dapat diubah. Jika salah, silakan hapus data ini dan input ulang.</div>
                             </div>
 
                             <div class="mb-3">
                                 <label class="form-label small fw-bold text-navy">Nama Kompetisi</label>
-                                <input type="text" name="nama_lomba" class="form-control" value="<?php echo htmlspecialchars($r['nama_lomba']); ?>" required>
+                                <input type="text" name="nama_lomba" class="form-control" value="<?php echo e($r['nama_lomba']); ?>" required>
                             </div>
 
                             <div class="row">
@@ -426,7 +448,7 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'data';
                                 </div>
                                 <div class="col-6 mb-3">
                                     <label class="form-label small fw-bold text-navy">Peringkat</label>
-                                    <input type="text" name="peringkat" class="form-control" value="<?php echo htmlspecialchars($r['peringkat']); ?>" required>
+                                    <input type="text" name="peringkat" class="form-control" value="<?php echo e($r['peringkat']); ?>" required>
                                 </div>
                             </div>
 
@@ -499,20 +521,21 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'data';
     <div class="modal fade text-start" id="editProfilGuru" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <form method="POST" class="modal-content custom-modal shadow">
+                <?php echo csrf_field(); ?>
                 <div class="modal-header">
                     <h5 class="modal-title fw-bold">Pengaturan Akun Guru</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <input type="hidden" name="nip_guru" value="<?php echo $dt_profil['nip'] ?? ''; ?>">
+                    <input type="hidden" name="nip_guru" value="<?php echo e($dt_profil['nip'] ?? ''); ?>">
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-navy">NIP (Nomor Induk Pegawai)</label>
-                        <input type="text" class="form-control bg-light" value="<?php echo $dt_profil['nip'] ?? ''; ?>" readonly>
+                        <input type="text" class="form-control bg-light" value="<?php echo e($dt_profil['nip'] ?? ''); ?>" readonly>
                         <div class="form-text small">*NIP digunakan sebagai Username Login dan tidak bisa diubah.</div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-navy">Nama Lengkap & Gelar</label>
-                        <input type="text" name="nama_guru" class="form-control" value="<?php echo $dt_profil['nama_guru'] ?? ''; ?>" required>
+                        <input type="text" name="nama_guru" class="form-control" value="<?php echo e($dt_profil['nama_guru'] ?? ''); ?>" required>
                     </div>
                     <div class="mb-2">
                         <label class="form-label small fw-bold text-navy">Password Akun (Kosongkan jika tidak diubah)</label>

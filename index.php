@@ -1,10 +1,10 @@
 <?php
 require 'koneksi.php';
 // Query untuk galeri prestasi
-$q_galeri = mysqli_query($conn, "SELECT p.*, s.nama_siswa, s.kelas FROM prestasi p JOIN siswa s ON p.nisn = s.nisn WHERE p.status_data = 'Approved' ORDER BY p.tanggal_pelaksanaan DESC LIMIT 6");
+$q_galeri = db_query($conn, "SELECT p.*, s.nama_siswa, s.kelas FROM prestasi p JOIN siswa s ON p.nisn = s.nisn WHERE p.status_data = 'Approved' ORDER BY p.tanggal_pelaksanaan DESC LIMIT 6");
 
-// Query untuk statistik singkat (contoh: menghitung total prestasi yang di-approve)
-$q_total = mysqli_query($conn, "SELECT COUNT(*) as total FROM prestasi WHERE status_data = 'Approved'");
+// Query untuk statistik singkat
+$q_total = db_query($conn, "SELECT COUNT(*) as total FROM prestasi WHERE status_data = 'Approved'");
 $total_prestasi = 0;
 if($q_total && mysqli_num_rows($q_total) > 0) {
     $row_total = mysqli_fetch_assoc($q_total);
@@ -12,7 +12,7 @@ if($q_total && mysqli_num_rows($q_total) > 0) {
 }
 
 // Query untuk total siswa berprestasi
-$q_siswa = mysqli_query($conn, "SELECT COUNT(DISTINCT nisn) as total_siswa FROM prestasi WHERE status_data = 'Approved'");
+$q_siswa = db_query($conn, "SELECT COUNT(DISTINCT nisn) as total_siswa FROM prestasi WHERE status_data = 'Approved'");
 $total_siswa = 0;
 if($q_siswa && mysqli_num_rows($q_siswa) > 0) {
     $row_siswa = mysqli_fetch_assoc($q_siswa);
@@ -125,21 +125,21 @@ if($q_siswa && mysqli_num_rows($q_siswa) > 0) {
                     <div class="achievement-card">
                         <div class="card-image">
                             <!-- Foto Sertifikat / Dokumentasi Lomba -->
-                            <img src="assets/uploads/<?php echo htmlspecialchars($row['file_sertifikat']); ?>" alt="Dokumentasi <?php echo htmlspecialchars($row['nama_lomba']); ?>" onerror="this.onerror=null; this.src='https://via.placeholder.com/400x300?text=Dokumentasi+Lomba';">
+                            <img src="assets/uploads/<?php echo e($row['file_sertifikat']); ?>" alt="Dokumentasi <?php echo e($row['nama_lomba']); ?>" onerror="this.onerror=null; this.src='https://via.placeholder.com/400x300?text=Dokumentasi+Lomba';">
                             <div class="rank-badge">
-                                <i class="bi bi-trophy"></i> <?php echo htmlspecialchars($row['peringkat']); ?>
+                                <i class="bi bi-trophy"></i> <?php echo e($row['peringkat']); ?>
                             </div>
                         </div>
                         <div class="card-content">
-                            <h3 class="achievement-title"><?php echo htmlspecialchars($row['nama_lomba']); ?></h3>
+                            <h3 class="achievement-title"><?php echo e($row['nama_lomba']); ?></h3>
                             <div class="info-group">
                                 <div class="student-info">
                                     <i class="bi bi-person-bounding-box"></i>
-                                    <span><?php echo htmlspecialchars($row['nama_siswa']); ?></span>
+                                    <span><?php echo e($row['nama_siswa']); ?></span>
                                 </div>
                                 <div class="class-info">
                                     <i class="bi bi-mortarboard-fill"></i>
-                                    <span>Kelas <?php echo htmlspecialchars($row['kelas']); ?></span>
+                                    <span>Kelas <?php echo e($row['kelas']); ?></span>
                                 </div>
                             </div>
                         </div>

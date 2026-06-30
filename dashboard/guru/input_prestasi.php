@@ -8,12 +8,16 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != "Guru") {
     exit();
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verify_csrf();
+}
+
 $nip_guru = $_SESSION['nip'];
 
 // --- [AKSI EDIT PROFIL] ---
 if (isset($_POST['edit_profil_guru'])) {
-    $nip_guru_edit  = mysqli_real_escape_string($conn, $_POST['nip_guru']);
-    $nama_guru = mysqli_real_escape_string($conn, $_POST['nama_guru']);
+    $nip_guru_edit  = trim($_POST['nip_guru']);
+    $nama_guru = trim($_POST['nama_guru']);
     $pass_guru = trim($_POST['pass_guru']);
 
     if (!empty($pass_guru)) {
@@ -22,9 +26,9 @@ if (isset($_POST['edit_profil_guru'])) {
             exit();
         }
         $pass_guru_hash = password_hash($pass_guru, PASSWORD_DEFAULT);
-        mysqli_query($conn, "UPDATE guru SET nama_guru='$nama_guru', PASSWORD='$pass_guru_hash' WHERE nip='$nip_guru_edit'");
+        db_query($conn, "UPDATE guru SET nama_guru=?, PASSWORD=? WHERE nip=?", "sss", $nama_guru, $pass_guru_hash, $nip_guru);
     } else {
-        mysqli_query($conn, "UPDATE guru SET nama_guru='$nama_guru' WHERE nip='$nip_guru_edit'");
+        db_query($conn, "UPDATE guru SET nama_guru=? WHERE nip=?", "ss", $nama_guru, $nip_guru);
     }
     
     $_SESSION['nama'] = $nama_guru;
@@ -41,15 +45,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && !isset($_POST['edit_profil_guru'])) 
     if (empty($_POST) && isset($_SERVER['CONTENT_LENGTH']) && $_SERVER['CONTENT_LENGTH'] > 0) {
         $pesan = "<div class='alert alert-danger fw-medium'><b>Gagal!</b> Ukuran file terlalu besar. Maksimal 5MB per file.</div>";
     } else {
-        $nisn                = mysqli_real_escape_string($conn, $_POST['nisn']);
-        $nama_lomba          = mysqli_real_escape_string($conn, $_POST['nama_lomba']);
-        $tingkat             = mysqli_real_escape_string($conn, $_POST['tingkat']);
-        $tanggal_pelaksanaan = mysqli_real_escape_string($conn, $_POST['tgl_lomba']);
+        $nisn                = trim($_POST['nisn']);
+        $nama_lomba          = trim($_POST['nama_lomba']);
+        $tingkat             = trim($_POST['tingkat']);
+        $tanggal_pelaksanaan = trim($_POST['tgl_lomba']);
         $status_data         = 'Pending';
         $tahun = date('Y', strtotime($tanggal_pelaksanaan));
 
-        $kategori = (isset($_POST['kategori']) && $_POST['kategori'] == "Lainnya") ? mysqli_real_escape_string($conn, $_POST['kategori_lainnya']) : mysqli_real_escape_string($conn, $_POST['kategori']);
-        $peringkat = (isset($_POST['peringkat']) && $_POST['peringkat'] == "Lainnya") ? mysqli_real_escape_string($conn, $_POST['peringkat_lainnya']) : mysqli_real_escape_string($conn, $_POST['peringkat']);
+        $kategori = (isset($_POST['kategori']) && $_POST['kategori'] == "Lainnya") ? trim($_POST['kategori_lainnya']) : trim($_POST['kategori'] ?? '');
+        $peringkat = (isset($_POST['peringkat']) && $_POST['peringkat'] == "Lainnya") ? trim($_POST['peringkat_lainnya']) : trim($_POST['peringkat'] ?? '');
 
         $allowed_ext = ['pdf', 'jpg', 'jpeg', 'png'];
 
@@ -90,19 +94,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && !isset($_POST['edit_profil_guru'])) 
                 }
 
                 // Simpan ke Database
-                $query = "INSERT INTO prestasi (
+                $query_insert = "INSERT INTO prestasi (
                             nisn, nip_guru, nama_lomba, kategori, tingkat, peringkat, 
                             tahun, tanggal_pelaksanaan, file_sertifikat, file_trofi, status_data
-                          ) VALUES (
-                            '$nisn', '$nip_guru', '$nama_lomba', '$kategori', '$tingkat', '$peringkat', 
-                            '$tahun', '$tanggal_pelaksanaan', '$nama_file_sertif', '$nama_file_foto', '$status_data'
-                          )";
+                          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                $res_ins = db_query($conn, $query_insert, "ssssssissss", $nisn, $nip_guru, $nama_lomba, $kategori, $tingkat, $peringkat, $tahun, $tanggal_pelaksanaan, $nama_file_sertif, $nama_file_foto, $status_data);
 
-                if (mysqli_query($conn, $query)) {
+                if ($res_ins) {
                     echo "<script>alert('Data prestasi berhasil diajukan dan masuk antrean verifikasi!'); window.location='dashboard.php';</script>";
                     exit();
                 } else {
-                    $pesan = "<div class='alert alert-danger fw-medium'>Gagal database: " . mysqli_error($conn) . "</div>";
+                    $pesan = "<div class='alert alert-danger fw-medium'>Gagal database</div>";
                 }
             }
         }
@@ -110,11 +112,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && !isset($_POST['edit_profil_guru'])) 
 }
 
 // Mengambil Data Profil Guru
-$q_profil = mysqli_query($conn, "SELECT * FROM guru WHERE nip='$nip_guru'");
+$q_profil = db_query($conn, "SELECT * FROM guru WHERE nip=?", "s", $nip_guru);
 $dt_profil = mysqli_fetch_assoc($q_profil);
 
 // Mengambil Data Siswa yang dikelompokkan berdasarkan Kelas
-$q_all_siswa = mysqli_query($conn, "SELECT nisn, nama_siswa, kelas FROM siswa ORDER BY nama_siswa ASC");
+$q_all_siswa = db_query($conn, "SELECT nisn, nama_siswa, kelas FROM siswa ORDER BY nama_siswa ASC");
 $data_all_siswa = [];
 while ($row = mysqli_fetch_assoc($q_all_siswa)) {
     $data_all_siswa[$row['kelas']][] = ['nisn' => $row['nisn'], 'nama' => $row['nama_siswa']];
@@ -169,6 +171,7 @@ $json_siswa = json_encode($data_all_siswa);
             <?php echo $pesan; ?>
 
             <form action="" method="POST" enctype="multipart/form-data">
+                <?php echo csrf_field(); ?>
 
                 <div class="row">
                     <div class="col-md-5 mb-4">
@@ -177,7 +180,7 @@ $json_siswa = json_encode($data_all_siswa);
                             <option value="">-- Pilih Kelas --</option>
                             <?php
                             // Mengambil daftar semua kelas (termasuk kelas kosong buatan Super Admin)
-                            $q_kelas = mysqli_query($conn, "SELECT nama_kelas FROM master_kelas ORDER BY nama_kelas ASC");
+                            $q_kelas = db_query($conn, "SELECT nama_kelas FROM master_kelas ORDER BY nama_kelas ASC");
                             while ($k = mysqli_fetch_assoc($q_kelas)) {
                                 $kelas_val = htmlspecialchars($k['nama_kelas']);
                                 echo "<option value='$kelas_val'>Kelas $kelas_val</option>";
@@ -265,20 +268,21 @@ $json_siswa = json_encode($data_all_siswa);
     <div class="modal fade text-start" id="editProfilGuru" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <form method="POST" class="modal-content custom-modal shadow">
+                <?php echo csrf_field(); ?>
                 <div class="modal-header">
                     <h5 class="modal-title fw-bold">Pengaturan Akun Guru</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <input type="hidden" name="nip_guru" value="<?php echo $dt_profil['nip'] ?? ''; ?>">
+                    <input type="hidden" name="nip_guru" value="<?php echo e($dt_profil['nip'] ?? ''); ?>">
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-navy">NIP (Nomor Induk Pegawai)</label>
-                        <input type="text" class="form-control bg-light" value="<?php echo $dt_profil['nip'] ?? ''; ?>" readonly>
+                        <input type="text" class="form-control bg-light" value="<?php echo e($dt_profil['nip'] ?? ''); ?>" readonly>
                         <div class="form-text small">*NIP digunakan sebagai Username Login dan tidak bisa diubah.</div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-navy">Nama Lengkap & Gelar</label>
-                        <input type="text" name="nama_guru" class="form-control" value="<?php echo htmlspecialchars($dt_profil['nama_guru'] ?? ''); ?>" required>
+                        <input type="text" name="nama_guru" class="form-control" value="<?php echo e($dt_profil['nama_guru'] ?? ''); ?>" required>
                     </div>
                     <div class="mb-2">
                         <label class="form-label small fw-bold text-navy">Password Akun (Kosongkan jika tidak diubah)</label>

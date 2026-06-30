@@ -8,11 +8,15 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != "Siswa") {
     exit();
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verify_csrf();
+}
+
 $nisn_siswa = isset($_SESSION['nisn']) ? $_SESSION['nisn'] : (isset($_SESSION['username']) ? $_SESSION['username'] : '');
 
 if (isset($_POST['edit_profil_siswa'])) {
-    $nisn_edit  = mysqli_real_escape_string($conn, $_POST['nisn_siswa']);
-    $nama_edit  = mysqli_real_escape_string($conn, $_POST['nama_siswa']);
+    $nisn_edit  = trim($_POST['nisn_siswa']);
+    $nama_edit  = trim($_POST['nama_siswa']);
     $pass_edit  = trim($_POST['pass_siswa']);
 
     if (!empty($pass_edit)) {
@@ -21,9 +25,9 @@ if (isset($_POST['edit_profil_siswa'])) {
             exit();
         }
         $pass_edit_hash = password_hash($pass_edit, PASSWORD_DEFAULT);
-        mysqli_query($conn, "UPDATE siswa SET nama_siswa='$nama_edit', PASSWORD='$pass_edit_hash' WHERE nisn='$nisn_edit'");
+        db_query($conn, "UPDATE siswa SET nama_siswa=?, PASSWORD=? WHERE nisn=?", "sss", $nama_edit, $pass_edit_hash, $nisn_siswa);
     } else {
-        mysqli_query($conn, "UPDATE siswa SET nama_siswa='$nama_edit' WHERE nisn='$nisn_edit'");
+        db_query($conn, "UPDATE siswa SET nama_siswa=? WHERE nisn=?", "ss", $nama_edit, $nisn_siswa);
     }
 
     $_SESSION['nama'] = $nama_edit;
@@ -32,7 +36,7 @@ if (isset($_POST['edit_profil_siswa'])) {
     exit();
 }
 
-$q_profil = mysqli_query($conn, "SELECT * FROM siswa WHERE nisn='$nisn_siswa'");
+$q_profil = db_query($conn, "SELECT * FROM siswa WHERE nisn=?", "s", $nisn_siswa);
 $dt_profil = mysqli_fetch_assoc($q_profil);
 
 $bulanIndo = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
@@ -41,23 +45,33 @@ $tahun_filter   = isset($_GET['tahun'])   ? (int)$_GET['tahun']   : (int)date('Y
 $bulan_filter   = isset($_GET['bulan'])   ? (int)$_GET['bulan']   : (int)date('n');
 $ta_awal_filter = isset($_GET['ta_awal']) ? (int)$_GET['ta_awal'] : ((int)date('n') >= 7 ? (int)date('Y') : (int)date('Y') - 1);
 
+$params_filter = [];
+$types_filter = "";
 switch ($filter_mode) {
     case 'bulan':
-        $where_filter = "YEAR(p.tanggal_pelaksanaan)='$tahun_filter' AND MONTH(p.tanggal_pelaksanaan)='$bulan_filter'";
+        $where_filter = "YEAR(p.tanggal_pelaksanaan)=? AND MONTH(p.tanggal_pelaksanaan)=?";
+        $types_filter .= "ii";
+        $params_filter[] = $tahun_filter;
+        $params_filter[] = $bulan_filter;
         break;
     case 'ta':
         $ta_akhir_filter = $ta_awal_filter + 1;
-        $where_filter = "((YEAR(p.tanggal_pelaksanaan)='$ta_awal_filter' AND MONTH(p.tanggal_pelaksanaan) >= 7) OR (YEAR(p.tanggal_pelaksanaan)='$ta_akhir_filter' AND MONTH(p.tanggal_pelaksanaan) <= 6))";
+        $where_filter = "((YEAR(p.tanggal_pelaksanaan)=? AND MONTH(p.tanggal_pelaksanaan) >= 7) OR (YEAR(p.tanggal_pelaksanaan)=? AND MONTH(p.tanggal_pelaksanaan) <= 6))";
+        $types_filter .= "ii";
+        $params_filter[] = $ta_awal_filter;
+        $params_filter[] = $ta_akhir_filter;
         break;
     default:
-        $where_filter = "YEAR(p.tanggal_pelaksanaan)='$tahun_filter'";
+        $where_filter = "YEAR(p.tanggal_pelaksanaan)=?";
+        $types_filter .= "i";
+        $params_filter[] = $tahun_filter;
         break;
 }
 
-$q_galeri = mysqli_query($conn, "SELECT p.*, s.nama_siswa, s.kelas FROM prestasi p JOIN siswa s ON p.nisn = s.nisn WHERE p.status_data='Approved' AND $where_filter ORDER BY p.tanggal_pelaksanaan DESC");
+$q_galeri = db_query($conn, "SELECT p.*, s.nama_siswa, s.kelas FROM prestasi p JOIN siswa s ON p.nisn = s.nisn WHERE p.status_data='Approved' AND $where_filter ORDER BY p.tanggal_pelaksanaan DESC", $types_filter, ...$params_filter);
 
 $tahun_list = [];
-$res_tahun_tmp = mysqli_query($conn, "SELECT DISTINCT YEAR(tanggal_pelaksanaan) as tahun FROM prestasi WHERE status_data='Approved'");
+$res_tahun_tmp = db_query($conn, "SELECT DISTINCT YEAR(tanggal_pelaksanaan) as tahun FROM prestasi WHERE status_data='Approved'");
 if ($res_tahun_tmp) {
     while ($yt = mysqli_fetch_assoc($res_tahun_tmp)) {
         $tahun_list[] = (int)$yt['tahun'];
@@ -146,7 +160,7 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'riwayat';
                                 <?php
                                 $no = 1;
                                 $data_riwayat_array = [];
-                                $q = mysqli_query($conn, "SELECT p.*, s.nama_siswa, s.kelas FROM prestasi p JOIN siswa s ON p.nisn = s.nisn WHERE p.nisn = '$nisn_siswa' AND p.status_data = 'Approved' ORDER BY p.id_prestasi DESC");
+                                $q = db_query($conn, "SELECT p.*, s.nama_siswa, s.kelas FROM prestasi p JOIN siswa s ON p.nisn = s.nisn WHERE p.nisn = ? AND p.status_data = 'Approved' ORDER BY p.id_prestasi DESC", "s", $nisn_siswa);
 
                                 if (mysqli_num_rows($q) > 0) {
                                     while ($r = mysqli_fetch_assoc($q)) {
@@ -331,24 +345,25 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'riwayat';
     <div class="modal fade text-start" id="editProfilSiswa" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <form method="POST" class="modal-content custom-modal shadow">
+                <?php echo csrf_field(); ?>
                 <div class="modal-header">
                     <h5 class="modal-title fw-bold">Pengaturan Akun</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <input type="hidden" name="nisn_siswa" value="<?php echo $dt_profil['nisn'] ?? ''; ?>">
+                    <input type="hidden" name="nisn_siswa" value="<?php echo e($dt_profil['nisn'] ?? ''); ?>">
                     <div class="mb-3">
                         <label class="form-label small">NISN (Nomor Induk Siswa Nasional)</label>
-                        <input type="text" class="form-control bg-light" value="<?php echo $dt_profil['nisn'] ?? ''; ?>" readonly>
+                        <input type="text" class="form-control bg-light" value="<?php echo e($dt_profil['nisn'] ?? ''); ?>" readonly>
                     </div>
                     <div class="mb-3">
                         <label class="form-label small">Kelas</label>
-                        <input type="text" class="form-control bg-light" value="<?php echo $dt_profil['kelas'] ?? ''; ?>" readonly>
+                        <input type="text" class="form-control bg-light" value="<?php echo e($dt_profil['kelas'] ?? ''); ?>" readonly>
                         <div class="form-text small">*NISN & Kelas dikunci demi integritas relasi data prestasi sekolah.</div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label small">Nama Lengkap Siswa</label>
-                        <input type="text" name="nama_siswa" class="form-control" value="<?php echo $dt_profil['nama_siswa'] ?? ''; ?>" required>
+                        <input type="text" name="nama_siswa" class="form-control" value="<?php echo e($dt_profil['nama_siswa'] ?? ''); ?>" required>
                     </div>
                     <div class="mb-2">
                         <label class="form-label small">Password Akun (Kosongkan jika tidak diubah)</label>

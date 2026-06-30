@@ -10,12 +10,19 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != "Admin TU") {
     exit();
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'] ?? '', $_POST['csrf_token'])) {
+        echo json_encode(['status' => 'error', 'message' => 'CSRF Token Invalid.']);
+        exit();
+    }
+}
+
 $action = $_GET['action'] ?? '';
 
 if ($action == 'acc_prestasi') {
     $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
 
-    $query = mysqli_query($conn, "UPDATE prestasi SET status_data='Approved', alasan_tolak=NULL WHERE id_prestasi=$id");
+    $query = db_query($conn, "UPDATE prestasi SET status_data='Approved', alasan_tolak=NULL WHERE id_prestasi=?", "i", $id);
 
     if ($query) {
         echo json_encode(['status' => 'success', 'message' => 'Prestasi berhasil disetujui!']);
@@ -27,14 +34,14 @@ if ($action == 'acc_prestasi') {
 
 if ($action == 'tolak_prestasi') {
     $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
-    $alasan = isset($_POST['alasan']) ? mysqli_real_escape_string($conn, trim($_POST['alasan'])) : '';
+    $alasan = isset($_POST['alasan']) ? trim($_POST['alasan']) : '';
 
     if (empty($alasan)) {
         echo json_encode(['status' => 'error', 'message' => 'Alasan penolakan tidak boleh kosong!']);
         exit();
     }
 
-    $query = mysqli_query($conn, "UPDATE prestasi SET status_data='Rejected', alasan_tolak='$alasan' WHERE id_prestasi=$id");
+    $query = db_query($conn, "UPDATE prestasi SET status_data='Rejected', alasan_tolak=? WHERE id_prestasi=?", "si", $alasan, $id);
 
     if ($query) {
         echo json_encode(['status' => 'success', 'message' => 'Prestasi berhasil ditolak.']);
@@ -49,7 +56,7 @@ if ($action == 'acc_reset') {
 
     $kode_baru = strtoupper(substr(md5(time() . rand()), 0, 5));
 
-    $query = mysqli_query($conn, "UPDATE request_reset SET kode_unik='$kode_baru', status_req='Approved' WHERE id_request=$id_req");
+    $query = db_query($conn, "UPDATE request_reset SET kode_unik=?, status_req='Approved' WHERE id_request=?", "si", $kode_baru, $id_req);
 
     if ($query) {
         echo json_encode(['status' => 'success', 'kode' => $kode_baru]);

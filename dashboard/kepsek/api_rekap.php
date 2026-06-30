@@ -8,30 +8,47 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != "Kepala Sekolah") {
     exit();
 }
 
-$filter_mode = mysqli_real_escape_string($conn, $_POST['filter_mode'] ?? 'all');
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verify_csrf();
+}
+
+$filter_mode = trim($_POST['filter_mode'] ?? 'all');
 $tahun_filter = (int)($_POST['tahun'] ?? date('Y'));
 $bulan_filter = (int)($_POST['bulan'] ?? date('n'));
 $ta_awal_filter = (int)($_POST['ta_awal'] ?? date('Y'));
-$tanggal_awal = mysqli_real_escape_string($conn, $_POST['tanggal_awal'] ?? date('Y-m-01'));
-$tanggal_akhir = mysqli_real_escape_string($conn, $_POST['tanggal_akhir'] ?? date('Y-m-t'));
+$tanggal_awal = trim($_POST['tanggal_awal'] ?? date('Y-m-01'));
+$tanggal_akhir = trim($_POST['tanggal_akhir'] ?? date('Y-m-t'));
 
 
 $where = "p.status_data='Approved'";
+$params = [];
+$types = "";
 
 if ($filter_mode == 'tahun') {
-    $where .= " AND YEAR(p.tanggal_pelaksanaan)='$tahun_filter'";
+    $where .= " AND YEAR(p.tanggal_pelaksanaan)=?";
+    $params[] = $tahun_filter;
+    $types .= "i";
 } elseif ($filter_mode == 'bulan') {
-    $where .= " AND YEAR(p.tanggal_pelaksanaan)='$tahun_filter' AND MONTH(p.tanggal_pelaksanaan)='$bulan_filter'";
+    $where .= " AND YEAR(p.tanggal_pelaksanaan)=? AND MONTH(p.tanggal_pelaksanaan)=?";
+    $params[] = $tahun_filter;
+    $params[] = $bulan_filter;
+    $types .= "ii";
 } elseif ($filter_mode == 'ta') {
     $ta_akhir = $ta_awal_filter + 1;
-    $where .= " AND ((YEAR(p.tanggal_pelaksanaan)='$ta_awal_filter' AND MONTH(p.tanggal_pelaksanaan) >= 7) OR (YEAR(p.tanggal_pelaksanaan)='$ta_akhir' AND MONTH(p.tanggal_pelaksanaan) <= 6))";
+    $where .= " AND ((YEAR(p.tanggal_pelaksanaan)=? AND MONTH(p.tanggal_pelaksanaan) >= 7) OR (YEAR(p.tanggal_pelaksanaan)=? AND MONTH(p.tanggal_pelaksanaan) <= 6))";
+    $params[] = $ta_awal_filter;
+    $params[] = $ta_akhir;
+    $types .= "ii";
 } elseif ($filter_mode == 'rentang') {
     $start_date = date('Y-m-d', strtotime($tanggal_awal));
     $end_date = date('Y-m-d', strtotime($tanggal_akhir));
-    $where .= " AND p.tanggal_pelaksanaan BETWEEN '$start_date' AND '$end_date'";
+    $where .= " AND p.tanggal_pelaksanaan BETWEEN ? AND ?";
+    $params[] = $start_date;
+    $params[] = $end_date;
+    $types .= "ss";
 }
 
-$q_stats = mysqli_query($conn, "SELECT tingkat, COUNT(*) as jml FROM prestasi p WHERE $where GROUP BY tingkat");
+$q_stats = db_query($conn, "SELECT tingkat, COUNT(*) as jml FROM prestasi p WHERE $where GROUP BY tingkat", $types, ...$params);
 $stats_data = ['Internasional' => 0, 'Nasional' => 0, 'Provinsi' => 0, 'Kota/Kabupaten' => 0];
 if ($q_stats) {
     while ($st = mysqli_fetch_assoc($q_stats)) {
@@ -46,7 +63,7 @@ $stats = [
     'kota' => $stats_data['Kota/Kabupaten']
 ];
 
-$q_data = mysqli_query($conn, "SELECT p.*, s.nama_siswa, s.kelas FROM prestasi p JOIN siswa s ON p.nisn = s.nisn WHERE $where ORDER BY p.tanggal_pelaksanaan DESC");
+$q_data = db_query($conn, "SELECT p.*, s.nama_siswa, s.kelas FROM prestasi p JOIN siswa s ON p.nisn = s.nisn WHERE $where ORDER BY p.tanggal_pelaksanaan DESC", $types, ...$params);
 
 $html_tabel = "";
 $html_galeri = "";

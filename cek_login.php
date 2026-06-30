@@ -1,10 +1,11 @@
 <?php
 session_start();
 require 'koneksi.php';
-/** @var mysqli $conn */
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $username = mysqli_real_escape_string($conn, trim($_POST['username']));
+    verify_csrf();
+
+    $username = trim($_POST['username']);
     $password_input = trim($_POST['password']);
     $remember = isset($_POST['remember']);
 
@@ -21,13 +22,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         
         if ($input_pass === $db_pass) {
             $hash_baru = password_hash($input_pass, PASSWORD_DEFAULT);
-            mysqli_query($conn, "UPDATE $tabel SET password='$hash_baru' WHERE $kolom_id='$val_id'");
+            db_query($conn, "UPDATE $tabel SET password=? WHERE $kolom_id=?", "ss", $hash_baru, $val_id);
             return true;
         }
         return false;
     }
 
-    $cek = mysqli_query($conn, "SELECT * FROM super_admin WHERE username='$username'");
+    $cek = db_query($conn, "SELECT * FROM super_admin WHERE username=?", "s", $username);
     if (mysqli_num_rows($cek) > 0) {
         $data = mysqli_fetch_assoc($cek);
         $db_pass = $data['PASSWORD'] ?? $data['password'] ?? '';
@@ -40,7 +41,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     if (!$login_success) {
-        $cek = mysqli_query($conn, "SELECT * FROM admin_tu WHERE username='$username' OR nip='$username'");
+        $cek = db_query($conn, "SELECT * FROM admin_tu WHERE username=? OR nip=?", "ss", $username, $username);
         if (mysqli_num_rows($cek) > 0) {
             $data = mysqli_fetch_assoc($cek);
             $db_pass = $data['PASSWORD'] ?? $data['password'] ?? '';
@@ -54,7 +55,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     if (!$login_success) {
-        $cek = mysqli_query($conn, "SELECT * FROM guru WHERE nip='$username' AND status='Aktif'");
+        $cek = db_query($conn, "SELECT * FROM guru WHERE nip=? AND status='Aktif'", "s", $username);
         if (mysqli_num_rows($cek) > 0) {
             $data = mysqli_fetch_assoc($cek);
             $db_pass = $data['PASSWORD'] ?? $data['password'] ?? '';
@@ -68,7 +69,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     if (!$login_success) {
-        $cek = mysqli_query($conn, "SELECT * FROM kepala_sekolah WHERE (username='$username' OR nip='$username') AND status='Aktif'");
+        $cek = db_query($conn, "SELECT * FROM kepala_sekolah WHERE (username=? OR nip=?) AND status='Aktif'", "ss", $username, $username);
         if (mysqli_num_rows($cek) > 0) {
             $data = mysqli_fetch_assoc($cek);
             $db_pass = $data['PASSWORD'] ?? $data['password'] ?? '';
@@ -82,7 +83,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     if (!$login_success) {
-        $cek = mysqli_query($conn, "SELECT * FROM siswa WHERE nisn='$username' AND status='Aktif'");
+        $cek = db_query($conn, "SELECT * FROM siswa WHERE nisn=? AND status='Aktif'", "s", $username);
         if (mysqli_num_rows($cek) > 0) {
             $data = mysqli_fetch_assoc($cek);
             $db_pass = $data['PASSWORD'] ?? $data['password'] ?? '';

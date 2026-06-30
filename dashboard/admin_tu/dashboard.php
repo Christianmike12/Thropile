@@ -8,10 +8,14 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != "Admin TU") {
     exit();
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verify_csrf();
+}
+
 if (isset($_POST['edit_profil_tu'])) {
-    $nip_tu  = mysqli_real_escape_string($conn, $_POST['nip_tu']);
-    $nama_tu = mysqli_real_escape_string($conn, $_POST['nama_tu']);
-    $user_tu = mysqli_real_escape_string($conn, $_POST['user_tu']);
+    $nip_tu  = trim($_POST['nip_tu']);
+    $nama_tu = trim($_POST['nama_tu']);
+    $user_tu = trim($_POST['user_tu']);
     $pass_tu = trim($_POST['pass_tu']);
 
     if (!empty($pass_tu)) {
@@ -20,9 +24,9 @@ if (isset($_POST['edit_profil_tu'])) {
             exit();
         }
         $pass_tu_hash = password_hash($pass_tu, PASSWORD_DEFAULT);
-        mysqli_query($conn, "UPDATE admin_tu SET nama_admin='$nama_tu', username='$user_tu', PASSWORD='$pass_tu_hash' WHERE nip='$nip_tu'");
+        db_query($conn, "UPDATE admin_tu SET nama_admin=?, username=?, PASSWORD=? WHERE nip=?", "ssss", $nama_tu, $user_tu, $pass_tu_hash, $nip_tu);
     } else {
-        mysqli_query($conn, "UPDATE admin_tu SET nama_admin='$nama_tu', username='$user_tu' WHERE nip='$nip_tu'");
+        db_query($conn, "UPDATE admin_tu SET nama_admin=?, username=? WHERE nip=?", "sss", $nama_tu, $user_tu, $nip_tu);
     }
     
     $_SESSION['nama'] = $nama_tu;
@@ -31,11 +35,11 @@ if (isset($_POST['edit_profil_tu'])) {
     exit();
 }
 
-@mysqli_query($conn, "DELETE FROM request_reset WHERE status_req='Selesai' OR waktu_req < NOW() - INTERVAL 1 HOUR");
+@db_query($conn, "DELETE FROM request_reset WHERE status_req='Selesai' OR waktu_req < NOW() - INTERVAL 1 HOUR");
 
 $bulanIndo = [1 => "Januari", 2 => "Februari", 3 => "Maret", 4 => "April", 5 => "Mei", 6 => "Juni", 7 => "Juli", 8 => "Agustus", 9 => "September", 10 => "Oktober", 11 => "November", 12 => "Desember"];
 $tahun_list = [];
-$res_t = mysqli_query($conn, "SELECT DISTINCT YEAR(tanggal_pelaksanaan) as thn FROM prestasi WHERE status_data='Approved'");
+$res_t = db_query($conn, "SELECT DISTINCT YEAR(tanggal_pelaksanaan) as thn FROM prestasi WHERE status_data='Approved'");
 if ($res_t) {
     while ($yt = mysqli_fetch_assoc($res_t)) {
         if (!empty($yt['thn'])) $tahun_list[] = (int)$yt['thn'];
@@ -47,12 +51,12 @@ rsort($tahun_list);
 $tahun_ini = date('Y');
 $data_jumlah_per_bulan = [];
 for ($i = 1; $i <= 12; $i++) {
-    $q_c = mysqli_query($conn, "SELECT COUNT(*) as jml FROM prestasi WHERE status_data='Approved' AND YEAR(tanggal_pelaksanaan)='$tahun_ini' AND MONTH(tanggal_pelaksanaan)='$i'");
+    $q_c = db_query($conn, "SELECT COUNT(*) as jml FROM prestasi WHERE status_data='Approved' AND YEAR(tanggal_pelaksanaan)=? AND MONTH(tanggal_pelaksanaan)=?", "ss", $tahun_ini, $i);
     $data_jumlah_per_bulan[] = $q_c ? (mysqli_fetch_assoc($q_c)['jml'] ?? 0) : 0;
 }
 
 $user_aktif = $_SESSION['username'] ?? '';
-$q_profil = mysqli_query($conn, "SELECT * FROM admin_tu WHERE username='$user_aktif'");
+$q_profil = db_query($conn, "SELECT * FROM admin_tu WHERE username=?", "s", $user_aktif);
 $dt_profil = mysqli_fetch_assoc($q_profil);
 $nama_tampil = $_SESSION['nama'] ?? 'Petugas TU';
 ?>
@@ -120,6 +124,7 @@ $nama_tampil = $_SESSION['nama'] ?? 'Petugas TU';
 
                     <div class="filter-box">
                         <form id="formFilterRekap">
+                            <?php echo csrf_field(); ?>
                             <div class="d-flex align-items-end gap-3 flex-wrap">
                                 <div>
                                     <label class="fw-semibold text-navy mb-1" style="font-size:13px;">Mode Filter</label>
@@ -219,7 +224,7 @@ $nama_tampil = $_SESSION['nama'] ?? 'Petugas TU';
                             <tbody>
                                 <?php
                                 $no = 1;
-                                $q = mysqli_query($conn, "SELECT p.*, s.nama_siswa, s.kelas, g.nama_guru FROM prestasi p JOIN siswa s ON p.nisn = s.nisn LEFT JOIN guru g ON p.nip_guru = g.nip WHERE p.status_data = 'Pending'");
+                                $q = db_query($conn, "SELECT p.*, s.nama_siswa, s.kelas, g.nama_guru FROM prestasi p JOIN siswa s ON p.nisn = s.nisn LEFT JOIN guru g ON p.nip_guru = g.nip WHERE p.status_data = 'Pending'");
                                 $data_verifikasi = [];
 
                                 if ($q && mysqli_num_rows($q) > 0) {
@@ -231,16 +236,16 @@ $nama_tampil = $_SESSION['nama'] ?? 'Petugas TU';
                                         <tr class='verifikasi-row' id="row-prestasi-<?php echo $r['id_prestasi']; ?>">
                                             <td><span class='badge bg-light text-dark border'><?php echo $no++; ?></span></td>
                                             <td class='text-start'>
-                                                <div class='fw-bold v-nama'><?php echo htmlspecialchars($r['nama_siswa']); ?></div>
-                                                <div class="small text-muted mb-1">Kelas <?php echo htmlspecialchars($r['kelas']); ?></div>
-                                                <div class="small fw-medium text-navy" style="font-size: 0.8rem;">Pembina: <?php echo htmlspecialchars($nama_guru); ?></div>
+                                                <div class='fw-bold v-nama'><?php echo e($r['nama_siswa']); ?></div>
+                                                <div class="small text-muted mb-1">Kelas <?php echo e($r['kelas']); ?></div>
+                                                <div class="small fw-medium text-navy" style="font-size: 0.8rem;">Pembina: <?php echo e($nama_guru); ?></div>
                                             </td>
-                                            <td class='text-start v-lomba fw-medium'><?php echo htmlspecialchars($r['nama_lomba']); ?></td>
-                                            <td><span class='badge bg-warning text-dark'><?php echo htmlspecialchars($r['peringkat']); ?></span></td>
-                                            <td><button type='button' class='btn btn-outline-dark btn-sm rounded-pill px-3 fw-medium' data-bs-toggle='modal' data-bs-target='#previewModal<?php echo $r['id_prestasi']; ?>'>Lihat Berkas</button></td>
+                                            <td class='text-start v-lomba fw-medium'><?php echo e($r['nama_lomba']); ?></td>
+                                            <td><span class='badge bg-warning text-dark'><?php echo e($r['peringkat']); ?></span></td>
+                                            <td><button type='button' class='btn btn-outline-dark btn-sm rounded-pill px-3 fw-medium' data-bs-toggle='modal' data-bs-target='#previewModal<?php echo e($r['id_prestasi']); ?>'>Lihat Berkas</button></td>
                                             <td class="col-aksi">
-                                                <button type='button' onclick="aksiVerify(<?php echo $r['id_prestasi']; ?>, 'acc')" class='btn btn-success btn-sm rounded-pill px-3 me-1'>ACC</button>
-                                                <button type='button' class='btn btn-danger btn-sm rounded-pill px-3' data-bs-toggle='modal' data-bs-target='#tolakModal<?php echo $r['id_prestasi']; ?>'>Tolak</button>
+                                                <button type='button' onclick="aksiVerify(<?php echo e($r['id_prestasi']); ?>, 'acc')" class='btn btn-success btn-sm rounded-pill px-3 me-1'>ACC</button>
+                                                <button type='button' class='btn btn-danger btn-sm rounded-pill px-3' data-bs-toggle='modal' data-bs-target='#tolakModal<?php echo e($r['id_prestasi']); ?>'>Tolak</button>
                                             </td>
                                         </tr>
                                 <?php
@@ -273,7 +278,7 @@ $nama_tampil = $_SESSION['nama'] ?? 'Petugas TU';
                             </thead>
                             <tbody>
                                 <?php
-                                $q_reset = @mysqli_query($conn, "SELECT * FROM request_reset ORDER BY waktu_req DESC");
+                                $q_reset = @db_query($conn, "SELECT * FROM request_reset ORDER BY waktu_req DESC");
                                 if ($q_reset && mysqli_num_rows($q_reset) > 0) {
                                     while ($r = mysqli_fetch_assoc($q_reset)) {
                                         $badge = match ($r['status_req']) {
@@ -283,10 +288,10 @@ $nama_tampil = $_SESSION['nama'] ?? 'Petugas TU';
                                             default => 'bg-secondary'
                                         };
                                 ?>
-                                        <tr class='reset-row' id="row-reset-<?php echo $r['id_request']; ?>">
-                                            <td class='text-muted small'><?php echo htmlspecialchars($r['waktu_req']); ?></td>
-                                            <td class='fw-medium text-navy r-username'><?php echo htmlspecialchars($r['username']); ?></td>
-                                            <td><span class='badge <?php echo $badge; ?> px-3 py-2 rounded-pill status-badge'><?php echo htmlspecialchars($r['status_req']); ?></span></td>
+                                        <tr class='reset-row' id="row-reset-<?php echo e($r['id_request']); ?>">
+                                            <td class='text-muted small'><?php echo e($r['waktu_req']); ?></td>
+                                            <td class='fw-medium text-navy r-username'><?php echo e($r['username']); ?></td>
+                                            <td><span class='badge <?php echo e($badge); ?> px-3 py-2 rounded-pill status-badge'><?php echo e($r['status_req']); ?></span></td>
                                             <td class="kode-cell">
                                                 <?php if ($r['kode_unik']) { ?>
                                                     <b style='letter-spacing:2px; font-size:16px; color:#002b5c;'><?php echo $r['kode_unik']; ?></b>
@@ -296,7 +301,7 @@ $nama_tampil = $_SESSION['nama'] ?? 'Petugas TU';
                                             </td>
                                             <td class="col-aksi aksi-cell">
                                                 <?php if ($r['status_req'] == 'Pending') { ?>
-                                                    <button type='button' onclick="aksiReset(<?php echo $r['id_request']; ?>)" class='btn btn-outline-dark btn-sm rounded-pill px-3 fw-medium btn-code-trigger'>ACC & Beri Kode</button>
+                                                    <button type='button' onclick="aksiReset(<?php echo e($r['id_request']); ?>)" class='btn btn-outline-dark btn-sm rounded-pill px-3 fw-medium btn-code-trigger'>ACC & Beri Kode</button>
                                                 <?php } else {
                                                     echo "<span class='text-muted'>-</span>";
                                                 } ?>
@@ -320,23 +325,24 @@ $nama_tampil = $_SESSION['nama'] ?? 'Petugas TU';
     <div class="modal fade text-start" id="editProfilTU" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <form method="POST" class="modal-content custom-modal shadow">
+                <?php echo csrf_field(); ?>
                 <div class="modal-header" style="background-color: #002b5c; color: white; border-bottom: none;">
                     <h5 class="modal-title fw-bold">Pengaturan Akun TU</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-4">
-                    <input type="hidden" name="nip_tu" value="<?php echo htmlspecialchars($dt_profil['nip'] ?? ''); ?>">
+                    <input type="hidden" name="nip_tu" value="<?php echo e($dt_profil['nip'] ?? ''); ?>">
                     <div class="mb-3">
                         <label class="form-label text-navy fw-semibold small">NIP (Nomor Induk Pegawai)</label>
-                        <input type="text" class="form-control bg-light" value="<?php echo htmlspecialchars($dt_profil['nip'] ?? ''); ?>" readonly>
+                        <input type="text" class="form-control bg-light" value="<?php echo e($dt_profil['nip'] ?? ''); ?>" readonly>
                     </div>
                     <div class="mb-3">
                         <label class="form-label text-navy fw-semibold small">Nama Lengkap</label>
-                        <input type="text" name="nama_tu" class="form-control" value="<?php echo htmlspecialchars($dt_profil['nama_admin'] ?? ''); ?>" required>
+                        <input type="text" name="nama_tu" class="form-control" value="<?php echo e($dt_profil['nama_admin'] ?? ''); ?>" required>
                     </div>
                     <div class="mb-3">
                         <label class="form-label text-navy fw-semibold small">Username Login</label>
-                        <input type="text" name="user_tu" class="form-control" value="<?php echo htmlspecialchars($dt_profil['username'] ?? ''); ?>" required>
+                        <input type="text" name="user_tu" class="form-control" value="<?php echo e($dt_profil['username'] ?? ''); ?>" required>
                     </div>
                     <div class="mb-2">
                         <label class="form-label text-navy fw-semibold small">Password Akun (Kosongkan jika tidak diubah)</label>
@@ -474,10 +480,13 @@ $nama_tampil = $_SESSION['nama'] ?? 'Petugas TU';
             window.open('cetak_rekap.php?' + params, '_blank');
         }
 
+        const csrfToken = "<?php echo generate_csrf_token(); ?>";
+
         async function aksiVerify(idPrestasi, tipe) {
             if (tipe === 'acc' && !confirm("Setujui prestasi ini?")) return;
             const formData = new FormData();
             formData.append('id', idPrestasi);
+            formData.append('csrf_token', csrfToken);
 
             try {
                 const response = await fetch(`api_admin.php?action=acc_prestasi`, {
@@ -514,6 +523,7 @@ $nama_tampil = $_SESSION['nama'] ?? 'Petugas TU';
             const formData = new FormData();
             formData.append('id', idPrestasi);
             formData.append('alasan', alasanInput);
+            formData.append('csrf_token', csrfToken);
 
             try {
                 const response = await fetch(`api_admin.php?action=tolak_prestasi`, {
@@ -543,6 +553,7 @@ $nama_tampil = $_SESSION['nama'] ?? 'Petugas TU';
         async function aksiReset(idRequest) {
             const formData = new FormData();
             formData.append('id_request', idRequest);
+            formData.append('csrf_token', csrfToken);
 
             try {
                 const response = await fetch(`api_admin.php?action=acc_reset`, {

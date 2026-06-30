@@ -10,12 +10,12 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != "Siswa") {
 
 $nisn_siswa = isset($_SESSION['nisn']) ? $_SESSION['nisn'] : (isset($_SESSION['username']) ? $_SESSION['username'] : '');
 
-$query_siswa = mysqli_query($conn, "SELECT * FROM siswa WHERE nisn = '$nisn_siswa'");
+$query_siswa = db_query($conn, "SELECT * FROM siswa WHERE nisn = ?", "s", $nisn_siswa);
 $data_siswa  = mysqli_fetch_assoc($query_siswa);
 
-$query_prestasi = mysqli_query($conn, "SELECT * FROM prestasi WHERE nisn = '$nisn_siswa' AND status_data = 'Approved' ORDER BY tahun DESC, id_prestasi DESC");
+$query_prestasi = db_query($conn, "SELECT * FROM prestasi WHERE nisn = ? AND status_data = 'Approved' ORDER BY tahun DESC, id_prestasi DESC", "s", $nisn_siswa);
 
-$query_kepsek = mysqli_query($conn, "SELECT * FROM kepala_sekolah LIMIT 1");
+$query_kepsek = db_query($conn, "SELECT * FROM kepala_sekolah LIMIT 1");
 $data_kepsek  = mysqli_fetch_assoc($query_kepsek);
 
 $bulanIndo = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
@@ -44,17 +44,17 @@ $tanggal_cetak = date('d') . " " . $bulanIndo[date('n') - 1] . " " . date('Y');
         <tr>
             <td style="width:20%;">Nama Lengkap</td>
             <td style="width:3%;">:</td>
-            <td style="width:77%;font-weight:bold;"><?php echo htmlspecialchars($data_siswa['nama_siswa'] ?? '-'); ?></td>
+            <td style="width:77%;font-weight:bold;"><?php echo e($data_siswa['nama_siswa'] ?? '-'); ?></td>
         </tr>
         <tr>
             <td>Nomor Induk (NISN)</td>
             <td>:</td>
-            <td><?php echo htmlspecialchars($data_siswa['nisn'] ?? '-'); ?></td>
+            <td><?php echo e($data_siswa['nisn'] ?? '-'); ?></td>
         </tr>
         <tr>
             <td>Kelas</td>
             <td>:</td>
-            <td><?php echo htmlspecialchars($data_siswa['kelas'] ?? '-'); ?></td>
+            <td><?php echo e($data_siswa['kelas'] ?? '-'); ?></td>
         </tr>
     </table>
 
@@ -81,11 +81,11 @@ $tanggal_cetak = date('d') . " " . $bulanIndo[date('n') - 1] . " " . date('Y');
                     $tahun_lomba = !empty($row['tahun']) ? $row['tahun'] : (!empty($row['tanggal_pelaksanaan']) ? date('Y', strtotime($row['tanggal_pelaksanaan'])) : '-');
                     echo "<tr>
                         <td class='text-center'>$no</td>
-                        <td><strong>" . htmlspecialchars($row['nama_lomba']) . "</strong></td>
-                        <td class='text-center'>" . htmlspecialchars($row['kategori']) . "</td>
-                        <td class='text-center'>" . htmlspecialchars($row['tingkat']) . "</td>
+                        <td><strong>" . e($row['nama_lomba']) . "</strong></td>
+                        <td class='text-center'>" . e($row['kategori']) . "</td>
+                        <td class='text-center'>" . e($row['tingkat']) . "</td>
                         <td class='text-center'>$tahun_lomba</td>
-                        <td class='text-center'>" . htmlspecialchars($row['peringkat']) . "</td>
+                        <td class='text-center'>" . e($row['peringkat']) . "</td>
                     </tr>";
                     $no++;
                 }
@@ -109,9 +109,9 @@ $tanggal_cetak = date('d') . " " . $bulanIndo[date('n') - 1] . " " . date('Y');
                         <img src="../../assets/images/stempel.png" alt="Stempel Resmi" class="stempel-image">
                     </div>
                     <span style="text-decoration:underline;font-weight:bold;position:relative;z-index:3;">
-                        <?php echo htmlspecialchars($data_kepsek['nama_kepala_sekolah'] ?? ''); ?>
+                        <?php echo e($data_kepsek['nama_kepala_sekolah'] ?? ''); ?>
                     </span><br>
-                    NIP. <?php echo htmlspecialchars($data_kepsek['nip'] ?? ''); ?>
+                    NIP. <?php echo e($data_kepsek['nip'] ?? ''); ?>
                 </div>
             </td>
         </tr>

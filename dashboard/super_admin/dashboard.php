@@ -4,18 +4,22 @@ require '../../koneksi.php';
 /** @var mysqli $conn */
 
 if (!isset($_SESSION['role']) || $_SESSION['role'] != "Super Admin") {
-    header("Location: ../../login.php"); // <-- Ingat, ini udah disesuaikan ke login.php ya!
+    header("Location: ../../login.php");
     exit();
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verify_csrf();
 }
 
 $pass_default_hash = password_hash('123', PASSWORD_DEFAULT);
 
 // --- [AKSI EDIT PROFIL] ---
 if (isset($_POST['edit_profil_sa'])) {
-    $id_sa   = mysqli_real_escape_string($conn, $_POST['id_sa']);
-    $nama_sa = mysqli_real_escape_string($conn, $_POST['nama_sa']);
-    $user_sa = mysqli_real_escape_string($conn, $_POST['user_sa']);
+    $nama_sa = trim($_POST['nama_sa']);
+    $user_sa = trim($_POST['user_sa']);
     $pass_sa = trim($_POST['pass_sa']);
+    $current_username = $_SESSION['username'];
 
     if (!empty($pass_sa)) {
         if (strlen($pass_sa) < 8 || !preg_match("/[a-zA-Z]/", $pass_sa) || !preg_match("/\d/", $pass_sa)) {
@@ -23,9 +27,9 @@ if (isset($_POST['edit_profil_sa'])) {
             exit();
         }
         $pass_sa_hash = password_hash($pass_sa, PASSWORD_DEFAULT);
-        mysqli_query($conn, "UPDATE super_admin SET nama_super_admin='$nama_sa', username='$user_sa', password='$pass_sa_hash' WHERE id_super_admin='$id_sa'");
+        db_query($conn, "UPDATE super_admin SET nama_super_admin=?, username=?, password=? WHERE username=?", "ssss", $nama_sa, $user_sa, $pass_sa_hash, $current_username);
     } else {
-        mysqli_query($conn, "UPDATE super_admin SET nama_super_admin='$nama_sa', username='$user_sa' WHERE id_super_admin='$id_sa'");
+        db_query($conn, "UPDATE super_admin SET nama_super_admin=?, username=? WHERE username=?", "sss", $nama_sa, $user_sa, $current_username);
     }
 
     $_SESSION['username'] = $user_sa;
@@ -36,128 +40,138 @@ if (isset($_POST['edit_profil_sa'])) {
 
 // --- [AKSI TAMBAH DATA] ---
 if (isset($_POST['tambah_admin'])) {
-    $nip  = mysqli_real_escape_string($conn, $_POST['nip']);
-    $nama = mysqli_real_escape_string($conn, $_POST['nama_admin']);
-    $user = mysqli_real_escape_string($conn, $_POST['username']);
-    mysqli_query($conn, "INSERT INTO admin_tu (nip, nama_admin, username, password, status) VALUES ('$nip', '$nama', '$user', '$pass_default_hash', 'Aktif')");
+    $nip  = trim($_POST['nip']);
+    $nama = trim($_POST['nama_admin']);
+    $user = trim($_POST['username']);
+    db_query($conn, "INSERT INTO admin_tu (nip, nama_admin, username, password, status) VALUES (?, ?, ?, ?, 'Aktif')", "ssss", $nip, $nama, $user, $pass_default_hash);
     header("Location: dashboard.php");
     exit();
 }
 
 if (isset($_POST['tambah_guru'])) {
-    $nip  = mysqli_real_escape_string($conn, $_POST['nip']);
-    $nama = mysqli_real_escape_string($conn, $_POST['nama_guru']);
-    mysqli_query($conn, "INSERT INTO guru (nip, nama_guru, password, status) VALUES ('$nip', '$nama', '$pass_default_hash', 'Aktif')");
+    $nip  = trim($_POST['nip']);
+    $nama = trim($_POST['nama_guru']);
+    db_query($conn, "INSERT INTO guru (nip, nama_guru, password, status) VALUES (?, ?, ?, 'Aktif')", "sss", $nip, $nama, $pass_default_hash);
     header("Location: dashboard.php");
     exit();
 }
 
 if (isset($_POST['tambah_kepsek'])) {
-    $nip  = mysqli_real_escape_string($conn, $_POST['nip']);
-    $nama = mysqli_real_escape_string($conn, $_POST['nama_kepsek']);
-    $user = mysqli_real_escape_string($conn, $_POST['username']);
-    mysqli_query($conn, "UPDATE kepala_sekolah SET status='Non-Aktif'");
-    mysqli_query($conn, "INSERT INTO kepala_sekolah (nip, nama_kepala_sekolah, username, password, status) VALUES ('$nip', '$nama', '$user', '$pass_default_hash', 'Aktif')");
+    $nip  = trim($_POST['nip']);
+    $nama = trim($_POST['nama_kepsek']);
+    $user = trim($_POST['username']);
+    db_query($conn, "UPDATE kepala_sekolah SET status='Non-Aktif'");
+    db_query($conn, "INSERT INTO kepala_sekolah (nip, nama_kepala_sekolah, username, password, status) VALUES (?, ?, ?, ?, 'Aktif')", "ssss", $nip, $nama, $user, $pass_default_hash);
     header("Location: dashboard.php");
     exit();
 }
 
 // Fitur Baru: Tambah Kelas
 if (isset($_POST['tambah_kelas'])) {
-    $nama_kelas = mysqli_real_escape_string($conn, $_POST['nama_kelas']);
-    mysqli_query($conn, "INSERT IGNORE INTO master_kelas (nama_kelas) VALUES ('$nama_kelas')");
+    $nama_kelas = trim($_POST['nama_kelas']);
+    db_query($conn, "INSERT IGNORE INTO master_kelas (nama_kelas) VALUES (?)", "s", $nama_kelas);
     header("Location: dashboard.php");
     exit();
 }
 
 // Tambah Siswa (Sekarang terikat ke kelas tertentu)
 if (isset($_POST['tambah_siswa'])) {
-    $nisn  = mysqli_real_escape_string($conn, $_POST['nisn']);
-    $nama  = mysqli_real_escape_string($conn, $_POST['nama_siswa']);
-    $kelas = mysqli_real_escape_string($conn, $_POST['kelas']);
-    mysqli_query($conn, "INSERT INTO siswa (nisn, nama_siswa, kelas, password, status) VALUES ('$nisn', '$nama', '$kelas', '$pass_default_hash', 'Aktif')");
+    $nisn  = trim($_POST['nisn']);
+    $nama  = trim($_POST['nama_siswa']);
+    $kelas = trim($_POST['kelas']);
+    db_query($conn, "INSERT INTO siswa (nisn, nama_siswa, kelas, password, status) VALUES (?, ?, ?, ?, 'Aktif')", "ssss", $nisn, $nama, $kelas, $pass_default_hash);
     header("Location: dashboard.php");
     exit();
 }
 
 // --- [AKSI EDIT & UPDATE] ---
 if (isset($_POST['edit_kepsek'])) {
-    $nip_lama = mysqli_real_escape_string($conn, $_POST['nip_lama']);
-    $nama     = mysqli_real_escape_string($conn, $_POST['nama_kepsek']);
-    $user     = mysqli_real_escape_string($conn, $_POST['username']);
-    mysqli_query($conn, "UPDATE kepala_sekolah SET nama_kepala_sekolah='$nama', username='$user' WHERE nip='$nip_lama'");
+    $nip_lama = trim($_POST['nip_lama']);
+    $nama     = trim($_POST['nama_kepsek']);
+    $user     = trim($_POST['username']);
+    db_query($conn, "UPDATE kepala_sekolah SET nama_kepala_sekolah=?, username=? WHERE nip=?", "sss", $nama, $user, $nip_lama);
     header("Location: dashboard.php");
     exit();
 }
 if (isset($_POST['edit_admin'])) {
-    $nip_lama = mysqli_real_escape_string($conn, $_POST['nip_lama']);
-    $nama     = mysqli_real_escape_string($conn, $_POST['nama_admin']);
-    $user     = mysqli_real_escape_string($conn, $_POST['username']);
-    mysqli_query($conn, "UPDATE admin_tu SET nama_admin='$nama', username='$user' WHERE nip='$nip_lama'");
+    $nip_lama = trim($_POST['nip_lama']);
+    $nama     = trim($_POST['nama_admin']);
+    $user     = trim($_POST['username']);
+    db_query($conn, "UPDATE admin_tu SET nama_admin=?, username=? WHERE nip=?", "sss", $nama, $user, $nip_lama);
     header("Location: dashboard.php");
     exit();
 }
 if (isset($_POST['edit_guru'])) {
-    $nip_lama = mysqli_real_escape_string($conn, $_POST['nip_lama']);
-    $nama     = mysqli_real_escape_string($conn, $_POST['nama_guru']);
-    mysqli_query($conn, "UPDATE guru SET nama_guru='$nama' WHERE nip='$nip_lama'");
+    $nip_lama = trim($_POST['nip_lama']);
+    $nama     = trim($_POST['nama_guru']);
+    db_query($conn, "UPDATE guru SET nama_guru=? WHERE nip=?", "ss", $nama, $nip_lama);
     header("Location: dashboard.php");
     exit();
 }
 if (isset($_POST['edit_siswa'])) {
-    $nisn_lama = mysqli_real_escape_string($conn, $_POST['nisn_lama']);
-    $nama      = mysqli_real_escape_string($conn, $_POST['nama_siswa']);
-    $kelas     = mysqli_real_escape_string($conn, $_POST['kelas']);
-    mysqli_query($conn, "UPDATE siswa SET nama_siswa='$nama', kelas='$kelas' WHERE nisn='$nisn_lama'");
+    $nisn_lama = trim($_POST['nisn_lama']);
+    $nama      = trim($_POST['nama_siswa']);
+    $kelas     = trim($_POST['kelas']);
+    db_query($conn, "UPDATE siswa SET nama_siswa=?, kelas=? WHERE nisn=?", "sss", $nama, $kelas, $nisn_lama);
     header("Location: dashboard.php");
     exit();
 }
 if (isset($_POST['kenaikan_massal'])) {
-    $kelas_lama = mysqli_real_escape_string($conn, $_POST['kelas_lama']);
-    $kelas_baru = mysqli_real_escape_string($conn, $_POST['kelas_baru']);
-    $status_baru = mysqli_real_escape_string($conn, $_POST['status_baru']);
+    $kelas_lama = trim($_POST['kelas_lama']);
+    $kelas_baru = trim($_POST['kelas_baru']);
+    $status_baru = trim($_POST['status_baru']);
 
     if ($status_baru == 'Lulus') {
-        mysqli_query($conn, "UPDATE siswa SET status='Lulus' WHERE kelas='$kelas_lama' AND status='Aktif'");
+        db_query($conn, "UPDATE siswa SET status='Lulus' WHERE kelas=? AND status='Aktif'", "s", $kelas_lama);
     } else {
         // Otomatis bikin wadah kelas baru kalau belum ada
-        mysqli_query($conn, "INSERT IGNORE INTO master_kelas (nama_kelas) VALUES ('$kelas_baru')");
-        mysqli_query($conn, "UPDATE siswa SET kelas='$kelas_baru' WHERE kelas='$kelas_lama' AND status='Aktif'");
+        db_query($conn, "INSERT IGNORE INTO master_kelas (nama_kelas) VALUES (?)", "s", $kelas_baru);
+        db_query($conn, "UPDATE siswa SET kelas=? WHERE kelas=? AND status='Aktif'", "ss", $kelas_baru, $kelas_lama);
     }
     echo "<script>alert('Update kelas massal berhasil!'); window.location='dashboard.php';</script>";
     exit();
 }
 
+function verify_get_csrf() {
+    if (!isset($_GET['csrf_token']) || !hash_equals($_SESSION['csrf_token'] ?? '', $_GET['csrf_token'])) {
+        die("CSRF Error");
+    }
+}
+
 // --- [AKSI SET STATUS] ---
 if (isset($_GET['nonaktif_admin'])) {
-    $id = mysqli_real_escape_string($conn, $_GET['nonaktif_admin']);
-    mysqli_query($conn, "UPDATE admin_tu SET status='Non-Aktif' WHERE nip='$id'");
+    verify_get_csrf();
+    $id = trim($_GET['nonaktif_admin']);
+    db_query($conn, "UPDATE admin_tu SET status='Non-Aktif' WHERE nip=?", "s", $id);
     header("Location: dashboard.php");
     exit();
 }
 if (isset($_GET['nonaktif_guru'])) {
-    $id = mysqli_real_escape_string($conn, $_GET['nonaktif_guru']);
-    mysqli_query($conn, "UPDATE guru SET status='Pensiun' WHERE nip='$id'");
+    verify_get_csrf();
+    $id = trim($_GET['nonaktif_guru']);
+    db_query($conn, "UPDATE guru SET status='Pensiun' WHERE nip=?", "s", $id);
     header("Location: dashboard.php");
     exit();
 }
 if (isset($_GET['nonaktif_siswa'])) {
-    $id = mysqli_real_escape_string($conn, $_GET['nonaktif_siswa']);
-    $status = mysqli_real_escape_string($conn, $_GET['status']);
-    mysqli_query($conn, "UPDATE siswa SET status='$status' WHERE nisn='$id'");
+    verify_get_csrf();
+    $id = trim($_GET['nonaktif_siswa']);
+    $status = trim($_GET['status']);
+    db_query($conn, "UPDATE siswa SET status=? WHERE nisn=?", "ss", $status, $id);
     header("Location: dashboard.php");
     exit();
 }
 if (isset($_GET['set_aktif_kepsek'])) {
-    $id = mysqli_real_escape_string($conn, $_GET['set_aktif_kepsek']);
-    mysqli_query($conn, "UPDATE kepala_sekolah SET status='Non-Aktif'");
-    mysqli_query($conn, "UPDATE kepala_sekolah SET status='Aktif' WHERE nip='$id'");
+    verify_get_csrf();
+    $id = trim($_GET['set_aktif_kepsek']);
+    db_query($conn, "UPDATE kepala_sekolah SET status='Non-Aktif'");
+    db_query($conn, "UPDATE kepala_sekolah SET status='Aktif' WHERE nip=?", "s", $id);
     header("Location: dashboard.php");
     exit();
 }
 
 $user_aktif = $_SESSION['username'] ?? '';
-$q_sa = mysqli_query($conn, "SELECT * FROM super_admin WHERE username='$user_aktif'");
+$q_sa = db_query($conn, "SELECT * FROM super_admin WHERE username=?", "s", $user_aktif);
 $dt_sa = mysqli_fetch_assoc($q_sa);
 $nama_tampil = $_SESSION['nama'] ?? ($dt_sa['nama_super_admin'] ?? 'Master Admin');
 ?>
@@ -230,7 +244,7 @@ $nama_tampil = $_SESSION['nama'] ?? ($dt_sa['nama_super_admin'] ?? 'Master Admin
                             </thead>
                             <tbody>
                                 <?php
-                                $q = mysqli_query($conn, "SELECT * FROM admin_tu ORDER BY status ASC");
+                                $q = db_query($conn, "SELECT * FROM admin_tu ORDER BY status ASC");
                                 $data_admins = [];
                                 while ($r = mysqli_fetch_assoc($q)) {
                                     $data_admins[] = $r;
@@ -239,12 +253,12 @@ $nama_tampil = $_SESSION['nama'] ?? ($dt_sa['nama_super_admin'] ?? 'Master Admin
                                     $status_badge = ($r['status'] != 'Aktif') ? "<span class='badge bg-secondary text-white ms-2'>" . $r['status'] . "</span>" : "";
                                 ?>
                                     <tr class="admin-row">
-                                        <td class="admin-nip"><span class='badge bg-light text-dark border'><?php echo $r['nip']; ?></span></td>
-                                        <td class='fw-medium text-start ps-3 admin-name'><?php echo $r['nama_admin'] . $status_badge; ?></td>
+                                        <td class="admin-nip"><span class='badge bg-light text-dark border'><?php echo e($r['nip']); ?></span></td>
+                                        <td class='fw-medium text-start ps-3 admin-name'><?php echo e($r['nama_admin']) . $status_badge; ?></td>
                                         <td class="col-aksi">
-                                            <button class='btn btn-outline-primary btn-sm rounded-pill px-3' data-bs-toggle='modal' data-bs-target='#editAdmin<?php echo $r['nip']; ?>'>Edit</button>
+                                            <button class='btn btn-outline-primary btn-sm rounded-pill px-3' data-bs-toggle='modal' data-bs-target='#editAdmin<?php echo e($r['nip']); ?>'>Edit</button>
                                             <?php if ($r['status'] == 'Aktif') { ?>
-                                                <a href='?nonaktif_admin=<?php echo $r['nip']; ?>' class='btn btn-outline-danger btn-sm rounded-pill px-3' onclick='return confirm("Non-Aktifkan Admin TU ini?")'>Non-Aktifkan</a>
+                                                <a href='?nonaktif_admin=<?php echo e($r['nip']); ?>&csrf_token=<?php echo generate_csrf_token(); ?>' class='btn btn-outline-danger btn-sm rounded-pill px-3' onclick='return confirm("Non-Aktifkan Admin TU ini?")'>Non-Aktifkan</a>
                                             <?php } ?>
                                         </td>
                                     </tr>
@@ -273,7 +287,7 @@ $nama_tampil = $_SESSION['nama'] ?? ($dt_sa['nama_super_admin'] ?? 'Master Admin
                             </thead>
                             <tbody>
                                 <?php
-                                $q = mysqli_query($conn, "SELECT * FROM guru ORDER BY status ASC, nama_guru ASC");
+                                $q = db_query($conn, "SELECT * FROM guru ORDER BY status ASC, nama_guru ASC");
                                 $data_gurus = [];
                                 while ($r = mysqli_fetch_assoc($q)) {
                                     $data_gurus[] = $r;
@@ -282,12 +296,12 @@ $nama_tampil = $_SESSION['nama'] ?? ($dt_sa['nama_super_admin'] ?? 'Master Admin
                                     $status_badge = ($r['status'] != 'Aktif') ? "<span class='badge bg-secondary text-white ms-2'>" . $r['status'] . "</span>" : "";
                                 ?>
                                     <tr class="guru-row">
-                                        <td class="guru-nip"><span class='badge bg-light text-dark border'><?php echo $r['nip']; ?></span></td>
-                                        <td class='fw-medium text-start ps-3 guru-name'><?php echo $r['nama_guru'] . $status_badge; ?></td>
+                                        <td class="guru-nip"><span class='badge bg-light text-dark border'><?php echo e($r['nip']); ?></span></td>
+                                        <td class='fw-medium text-start ps-3 guru-name'><?php echo e($r['nama_guru']) . $status_badge; ?></td>
                                         <td class="col-aksi">
-                                            <button class='btn btn-outline-primary btn-sm rounded-pill px-3' data-bs-toggle='modal' data-bs-target='#editGuru<?php echo $r['nip']; ?>'>Edit</button>
+                                            <button class='btn btn-outline-primary btn-sm rounded-pill px-3' data-bs-toggle='modal' data-bs-target='#editGuru<?php echo e($r['nip']); ?>'>Edit</button>
                                             <?php if ($r['status'] == 'Aktif') { ?>
-                                                <a href='?nonaktif_guru=<?php echo $r['nip']; ?>' class='btn btn-outline-danger btn-sm rounded-pill px-3' onclick='return confirm("Arsipkan guru ini menjadi Pensiun/Pindah?")'>Non-Aktifkan</a>
+                                                <a href='?nonaktif_guru=<?php echo e($r['nip']); ?>&csrf_token=<?php echo generate_csrf_token(); ?>' class='btn btn-outline-danger btn-sm rounded-pill px-3' onclick='return confirm("Arsipkan guru ini menjadi Pensiun/Pindah?")'>Non-Aktifkan</a>
                                             <?php } ?>
                                         </td>
                                     </tr>
@@ -309,7 +323,7 @@ $nama_tampil = $_SESSION['nama'] ?? ($dt_sa['nama_super_admin'] ?? 'Master Admin
 
                     <div class="accordion" id="accordionSiswa">
                         <?php
-                        $q_master_kelas = mysqli_query($conn, "SELECT nama_kelas FROM master_kelas ORDER BY nama_kelas ASC");
+                        $q_master_kelas = db_query($conn, "SELECT nama_kelas FROM master_kelas ORDER BY nama_kelas ASC");
                         $list_kelas_unik = [];
 
                         while ($row_kelas = mysqli_fetch_assoc($q_master_kelas)) {
@@ -318,7 +332,7 @@ $nama_tampil = $_SESSION['nama'] ?? ($dt_sa['nama_super_admin'] ?? 'Master Admin
                             $md5_kelas = md5($kelas);
 
                             // Hitung jumlah siswa di kelas ini
-                            $q_hitung = mysqli_query($conn, "SELECT COUNT(*) as jml FROM siswa WHERE kelas='$kelas'");
+                            $q_hitung = db_query($conn, "SELECT COUNT(*) as jml FROM siswa WHERE kelas=?", "s", $kelas);
                             $jml_siswa = mysqli_fetch_assoc($q_hitung)['jml'];
                         ?>
                             <div class="accordion-item mb-3 border-0 shadow-sm rounded student-accordion-item">
@@ -345,7 +359,7 @@ $nama_tampil = $_SESSION['nama'] ?? ($dt_sa['nama_super_admin'] ?? 'Master Admin
                                                 </thead>
                                                 <tbody>
                                                     <?php
-                                                    $q_siswa_kelas = mysqli_query($conn, "SELECT * FROM siswa WHERE kelas='$kelas' ORDER BY nama_siswa ASC");
+                                                    $q_siswa_kelas = db_query($conn, "SELECT * FROM siswa WHERE kelas=? ORDER BY nama_siswa ASC", "s", $kelas);
                                                     if (mysqli_num_rows($q_siswa_kelas) > 0) {
                                                         while ($r = mysqli_fetch_assoc($q_siswa_kelas)) {
                                                             $badge_color = 'bg-secondary';
@@ -354,17 +368,17 @@ $nama_tampil = $_SESSION['nama'] ?? ($dt_sa['nama_super_admin'] ?? 'Master Admin
                                                             $status_badge = ($r['status'] != 'Aktif') ? "<span class='badge $badge_color ms-2'>" . $r['status'] . "</span>" : "";
                                                     ?>
                                                             <tr class="student-row">
-                                                                <td class="student-nisn"><span class='badge bg-light text-dark border'><?php echo $r['nisn']; ?></span></td>
-                                                                <td class='fw-medium text-start ps-4 student-name'><?php echo $r['nama_siswa'] . $status_badge; ?></td>
+                                                                <td class="student-nisn"><span class='badge bg-light text-dark border'><?php echo e($r['nisn']); ?></span></td>
+                                                                <td class='fw-medium text-start ps-4 student-name'><?php echo e($r['nama_siswa']) . $status_badge; ?></td>
                                                                 <td class="col-aksi">
-                                                                    <button class='btn btn-outline-primary btn-sm rounded-pill px-3' data-bs-toggle='modal' data-bs-target='#editSiswa<?php echo $r['nisn']; ?>'>Edit</button>
+                                                                    <button class='btn btn-outline-primary btn-sm rounded-pill px-3' data-bs-toggle='modal' data-bs-target='#editSiswa<?php echo e($r['nisn']); ?>'>Edit</button>
                                                                     <?php if ($r['status'] == 'Aktif') { ?>
                                                                         <div class="btn-group">
                                                                             <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-3 dropdown-toggle" data-bs-toggle="dropdown">Non-Aktifkan</button>
                                                                             <ul class="dropdown-menu">
-                                                                                <li><a class="dropdown-item" href="?nonaktif_siswa=<?php echo $r['nisn']; ?>&status=Lulus" onclick='return confirm("Set status Lulus?")'>Lulus</a></li>
-                                                                                <li><a class="dropdown-item" href="?nonaktif_siswa=<?php echo $r['nisn']; ?>&status=Pindah" onclick='return confirm("Set status Pindah Sekolah?")'>Pindah</a></li>
-                                                                                <li><a class="dropdown-item" href="?nonaktif_siswa=<?php echo $r['nisn']; ?>&status=Keluar" onclick='return confirm("Set status Dikeluarkan?")'>Keluar</a></li>
+                                                                                <li><a class="dropdown-item" href="?nonaktif_siswa=<?php echo e($r['nisn']); ?>&status=Lulus&csrf_token=<?php echo generate_csrf_token(); ?>" onclick='return confirm("Set status Lulus?")'>Lulus</a></li>
+                                                                                <li><a class="dropdown-item" href="?nonaktif_siswa=<?php echo e($r['nisn']); ?>&status=Pindah&csrf_token=<?php echo generate_csrf_token(); ?>" onclick='return confirm("Set status Pindah Sekolah?")'>Pindah</a></li>
+                                                                                <li><a class="dropdown-item" href="?nonaktif_siswa=<?php echo e($r['nisn']); ?>&status=Keluar&csrf_token=<?php echo generate_csrf_token(); ?>" onclick='return confirm("Set status Dikeluarkan?")'>Keluar</a></li>
                                                                             </ul>
                                                                         </div>
                                                                     <?php } ?>
@@ -405,18 +419,18 @@ $nama_tampil = $_SESSION['nama'] ?? ($dt_sa['nama_super_admin'] ?? 'Master Admin
                             </thead>
                             <tbody>
                                 <?php
-                                $q = mysqli_query($conn, "SELECT * FROM kepala_sekolah ORDER BY status ASC");
+                                $q = db_query($conn, "SELECT * FROM kepala_sekolah ORDER BY status ASC");
                                 while ($k = mysqli_fetch_assoc($q)) {
                                     $badge_status = ($k['status'] == 'Aktif') ? "<span class='badge bg-success px-3 py-2'>Aktif</span>" : "<span class='badge bg-secondary px-3 py-2'>Non-Aktif</span>";
                                 ?>
                                     <tr>
-                                        <td><span class='badge bg-light text-dark border'><?php echo $k['nip']; ?></span></td>
-                                        <td class='fw-medium text-start ps-3'><?php echo $k['nama_kepala_sekolah']; ?></td>
+                                        <td><span class='badge bg-light text-dark border'><?php echo e($k['nip']); ?></span></td>
+                                        <td class='fw-medium text-start ps-3'><?php echo e($k['nama_kepala_sekolah']); ?></td>
                                         <td><?php echo $badge_status; ?></td>
                                         <td class="col-aksi">
-                                            <button class='btn btn-outline-primary btn-sm rounded-pill px-3 m-1' data-bs-toggle='modal' data-bs-target='#editKepsek<?php echo $k['nip']; ?>'>Edit</button>
+                                            <button class='btn btn-outline-primary btn-sm rounded-pill px-3 m-1' data-bs-toggle='modal' data-bs-target='#editKepsek<?php echo e($k['nip']); ?>'>Edit</button>
                                             <?php if ($k['status'] != 'Aktif') { ?>
-                                                <a href='?set_aktif_kepsek=<?php echo $k['nip']; ?>' class='btn btn-outline-success btn-sm rounded-pill px-3 m-1' onclick='return confirm("Jadikan akun ini sebagai Kepsek Aktif? Kepsek sebelumnya akan otomatis Non-Aktif.")'>Set Aktif</a>
+                                                <a href='?set_aktif_kepsek=<?php echo e($k['nip']); ?>&csrf_token=<?php echo generate_csrf_token(); ?>' class='btn btn-outline-success btn-sm rounded-pill px-3 m-1' onclick='return confirm("Jadikan akun ini sebagai Kepsek Aktif? Kepsek sebelumnya akan otomatis Non-Aktif.")'>Set Aktif</a>
                                             <?php } ?>
                                         </td>
                                     </tr>
@@ -433,6 +447,7 @@ $nama_tampil = $_SESSION['nama'] ?? ($dt_sa['nama_super_admin'] ?? 'Master Admin
     <div class="modal fade" id="kenaikanMassal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <form method="POST" class="modal-content custom-modal">
+                <?php echo csrf_field(); ?>
                 <div class="modal-header">
                     <h5 class="modal-title fw-bold">Kenaikan Kelas / Kelulusan Massal</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
@@ -467,6 +482,7 @@ $nama_tampil = $_SESSION['nama'] ?? ($dt_sa['nama_super_admin'] ?? 'Master Admin
     <div class="modal fade text-start" id="editProfilSA" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <form method="POST" class="modal-content custom-modal shadow">
+                <?php echo csrf_field(); ?>
                 <div class="modal-header">
                     <h5 class="modal-title fw-bold">Pengaturan Akun</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
@@ -484,6 +500,7 @@ $nama_tampil = $_SESSION['nama'] ?? ($dt_sa['nama_super_admin'] ?? 'Master Admin
     <div class="modal fade" id="addAdmin" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <form method="POST" class="modal-content custom-modal">
+                <?php echo csrf_field(); ?>
                 <div class="modal-header">
                     <h5 class="modal-title fw-bold">Tambah Admin TU</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
@@ -501,6 +518,7 @@ $nama_tampil = $_SESSION['nama'] ?? ($dt_sa['nama_super_admin'] ?? 'Master Admin
     <div class="modal fade" id="addGuru" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <form method="POST" class="modal-content custom-modal">
+                <?php echo csrf_field(); ?>
                 <div class="modal-header">
                     <h5 class="modal-title fw-bold">Tambah Guru</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
@@ -517,6 +535,7 @@ $nama_tampil = $_SESSION['nama'] ?? ($dt_sa['nama_super_admin'] ?? 'Master Admin
     <div class="modal fade" id="addKepsek" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <form method="POST" class="modal-content custom-modal">
+                <?php echo csrf_field(); ?>
                 <div class="modal-header">
                     <h5 class="modal-title fw-bold">Tambah Kepala Sekolah</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
@@ -535,6 +554,7 @@ $nama_tampil = $_SESSION['nama'] ?? ($dt_sa['nama_super_admin'] ?? 'Master Admin
     <div class="modal fade" id="addKelas" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <form method="POST" class="modal-content custom-modal">
+                <?php echo csrf_field(); ?>
                 <div class="modal-header">
                     <h5 class="modal-title fw-bold">Tambah Wadah Kelas Baru</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
@@ -552,6 +572,7 @@ $nama_tampil = $_SESSION['nama'] ?? ($dt_sa['nama_super_admin'] ?? 'Master Admin
     <div class="modal fade" id="addSiswaModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <form method="POST" class="modal-content custom-modal">
+                <?php echo csrf_field(); ?>
                 <div class="modal-header">
                     <h5 class="modal-title fw-bold">Tambah Siswa Baru</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
@@ -573,6 +594,7 @@ $nama_tampil = $_SESSION['nama'] ?? ($dt_sa['nama_super_admin'] ?? 'Master Admin
         <div class="modal fade text-start" id="editAdmin<?php echo $r['nip']; ?>" tabindex="-1">
             <div class="modal-dialog modal-dialog-centered">
                 <form method="POST" class="modal-content custom-modal shadow">
+                    <?php echo csrf_field(); ?>
                     <div class="modal-header">
                         <h5 class="modal-title fw-bold">Edit Admin TU</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
@@ -592,6 +614,7 @@ $nama_tampil = $_SESSION['nama'] ?? ($dt_sa['nama_super_admin'] ?? 'Master Admin
         <div class="modal fade text-start" id="editGuru<?php echo $r['nip']; ?>" tabindex="-1">
             <div class="modal-dialog modal-dialog-centered">
                 <form method="POST" class="modal-content custom-modal shadow">
+                    <?php echo csrf_field(); ?>
                     <div class="modal-header">
                         <h5 class="modal-title fw-bold">Edit Guru</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
@@ -607,11 +630,12 @@ $nama_tampil = $_SESSION['nama'] ?? ($dt_sa['nama_super_admin'] ?? 'Master Admin
     <?php } ?>
 
     <?php
-    $q_all_siswa_modal = mysqli_query($conn, "SELECT * FROM siswa");
+    $q_all_siswa_modal = db_query($conn, "SELECT * FROM siswa");
     while ($r = mysqli_fetch_assoc($q_all_siswa_modal)) { ?>
         <div class="modal fade text-start" id="editSiswa<?php echo $r['nisn']; ?>" tabindex="-1">
             <div class="modal-dialog modal-dialog-centered">
                 <form method="POST" class="modal-content custom-modal shadow">
+                    <?php echo csrf_field(); ?>
                     <div class="modal-header">
                         <h5 class="modal-title fw-bold">Edit Siswa</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
@@ -636,12 +660,13 @@ $nama_tampil = $_SESSION['nama'] ?? ($dt_sa['nama_super_admin'] ?? 'Master Admin
     <?php } ?>
 
     <?php
-    $q_kepsek_modal = mysqli_query($conn, "SELECT * FROM kepala_sekolah");
+    $q_kepsek_modal = db_query($conn, "SELECT * FROM kepala_sekolah");
     while ($k_modal = mysqli_fetch_assoc($q_kepsek_modal)) {
     ?>
         <div class="modal fade text-start" id="editKepsek<?php echo $k_modal['nip']; ?>" tabindex="-1">
             <div class="modal-dialog modal-dialog-centered">
                 <form method="POST" class="modal-content custom-modal shadow">
+                    <?php echo csrf_field(); ?>
                     <div class="modal-header">
                         <h5 class="modal-title fw-bold">Edit Kepala Sekolah</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
